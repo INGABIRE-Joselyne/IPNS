@@ -44,12 +44,14 @@ class StockListSerializer(serializers.ModelSerializer):
     """Simplified stock serializer for list views."""
     medicine_name = serializers.CharField(source='medicine.name', read_only=True)
     pharmacy_name = serializers.CharField(source='pharmacy.name', read_only=True)
+    pharmacy_logo = serializers.ImageField(source='pharmacy.logo', read_only=True)
+    sector_name = serializers.CharField(source='pharmacy.sector.name', read_only=True)
     district_name = serializers.CharField(source='pharmacy.sector.district.name', read_only=True)
     is_expired = serializers.SerializerMethodField()
     
     class Meta:
         model = Stock
-        fields = ['id', 'medicine_name', 'pharmacy_name', 'district_name', 
+        fields = ['id', 'medicine_name', 'pharmacy_name', 'pharmacy_logo', 'sector_name', 'district_name', 
                   'quantity', 'price', 'is_in_stock', 'is_expired', 'last_updated']
     
     def get_is_expired(self, obj):

@@ -4,6 +4,9 @@ Main API URL configuration for IPNS.
 from django.urls import path, include
 
 urlpatterns = [
+    # Auth API
+    path('auth/', include('apps.auth_api.urls')),
+    
     # Locations API
     path('locations/', include('apps.locations.urls')),
     

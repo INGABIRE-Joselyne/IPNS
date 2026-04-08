@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 
 class PharmacyManager(models.Manager):
@@ -13,8 +14,16 @@ class PharmacyManager(models.Manager):
 
 class Pharmacy(models.Model):
     """Pharmacy information and details."""
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='pharmacy',
+        null=True,
+        blank=True
+    )
     name = models.CharField(max_length=200, db_index=True)
     description = models.TextField(blank=True, null=True)
+    logo = models.ImageField(upload_to='pharmacy_logos/', blank=True, null=True)
     
     # Location information
     sector = models.ForeignKey(

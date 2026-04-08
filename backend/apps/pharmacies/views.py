@@ -1,6 +1,7 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.filters import SearchFilter, OrderingFilter
 
 from .models import Pharmacy
@@ -19,6 +20,7 @@ class PharmacyViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'phone_number', 'email']
     ordering_fields = ['name', 'created_at']
     ordering = ['name']
+    permission_classes = [AllowAny]  # Explicitly allow all by default
     
     def get_serializer_class(self):
         if self.action == 'list':
@@ -49,6 +51,19 @@ class PharmacyViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_active=is_active.lower() == 'true')
         
         return queryset
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def profile(self, request):
+        """Get the current authenticated user's pharmacy profile."""
+        try:
+            pharmacy = request.user.pharmacy
+            serializer = PharmacySerializer(pharmacy)
+            return Response(serializer.data)
+        except Pharmacy.DoesNotExist:
+            return Response(
+                {'detail': 'No pharmacy found for this user'},
+                status=status.HTTP_404_NOT_FOUND
+            )
     
     @action(detail=False, methods=['get'])
     def by_district(self, request):

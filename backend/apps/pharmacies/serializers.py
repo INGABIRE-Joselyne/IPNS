@@ -33,7 +33,7 @@ class PharmacySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'description', 'sector', 'sector_id', 'street_address', 
+        fields = ['id', 'name', 'description', 'logo', 'sector', 'sector_id', 'street_address', 
                   'latitude', 'longitude', 'phone_number', 'email', 'insurance_providers',
                   'insurance_provider_ids', 'opening_time', 'closing_time', 'is_active',
                   'current_status', 'working_hours', 'created_at', 'updated_at']
@@ -51,7 +51,7 @@ class PharmacyListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'phone_number', 'sector_name', 'district_name', 
+        fields = ['id', 'name', 'logo', 'phone_number', 'sector_name', 'district_name', 
                   'opening_time', 'closing_time', 'is_active', 'current_status', 'insurance_count']
     
     def get_current_status(self, obj):

@@ -68,6 +68,7 @@ class StockViewSet(viewsets.ModelViewSet):
         """Search for a specific medicine across all pharmacies."""
         medicine_id = request.query_params.get('medicine_id')
         district_id = request.query_params.get('district_id')
+        sector_id = request.query_params.get('sector_id')
         
         if not medicine_id:
             return Response({'detail': 'medicine_id parameter required'}, status=400)
@@ -76,6 +77,9 @@ class StockViewSet(viewsets.ModelViewSet):
         
         if district_id:
             queryset = queryset.filter(pharmacy__sector__district_id=district_id)
+        
+        if sector_id:
+            queryset = queryset.filter(pharmacy__sector_id=sector_id)
         
         serializer = StockListSerializer(queryset, many=True)
         return Response(serializer.data)

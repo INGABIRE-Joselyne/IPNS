@@ -54,7 +54,7 @@ const PharmacyFinder = () => {
   const loadProvinces = async () => {
     try {
       const data = await apiGet(endpoints.provinces);
-      setProvinces(data.results || []);
+      setProvinces(Array.isArray(data) ? data : data.results || []);
     } catch (error) {
       console.error('Failed to load provinces:', error);
     }
@@ -82,7 +82,7 @@ const PharmacyFinder = () => {
     setIsLoading(true);
     try {
       const data = await apiGet(endpoints.pharmacies);
-      setPharmacies(data.results || []);
+      setPharmacies(Array.isArray(data) ? data : data.results || []);
     } catch (error) {
       console.error('Failed to load pharmacies:', error);
       setPharmacies([]);

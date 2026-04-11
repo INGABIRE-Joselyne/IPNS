@@ -24,10 +24,11 @@ const DashboardOverview = ({ pharmacy, token, onRefresh }) => {
 
       if (stockResponse.ok) {
         const stockData = await stockResponse.json();
-        const lowStock = stockData.results?.filter(s => s.quantity < 10).length || 0;
-        setStats(prev => ({
+        const list = Array.isArray(stockData) ? stockData : stockData.results || [];
+        const lowStock = list.filter((s) => s.quantity < 10).length;
+        setStats((prev) => ({
           ...prev,
-          medicines_listed: stockData.count || 0,
+          medicines_listed: list.length,
           low_stock_count: lowStock,
         }));
       }
@@ -123,15 +124,15 @@ const DashboardOverview = ({ pharmacy, token, onRefresh }) => {
         </a>
 
         <a
-          href="/find-pharmacy"
+          href={`/pharmacies/${pharmacy.id}`}
           className="bg-white border border-gray-200 hover:border-emerald-400 hover:shadow-lg rounded-lg p-6 transition-all group"
         >
           <h3 className="text-gray-900 font-semibold text-lg mb-2 group-hover:text-emerald-600 transition-colors">
-            View Public Profile
+            View public profile
           </h3>
-          <p className="text-gray-600 text-sm mb-4">See how your pharmacy appears to customers</p>
+          <p className="text-gray-600 text-sm mb-4">Open the same page customers see for your pharmacy</p>
           <div className="inline-block bg-emerald-100 text-emerald-700 px-3 py-1 rounded text-sm font-semibold">
-            View Profile
+            View profile
           </div>
         </a>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Shield, Check, X, Loader } from 'lucide-react';
+import InsurancePartnerSelector from './InsurancePartnerSelector';
 
 const DashboardInsuranceManagement = ({ pharmacy, setPharmacy, token, onRefresh }) => {
   const [allInsurances, setAllInsurances] = useState([]);
@@ -15,8 +16,9 @@ const DashboardInsuranceManagement = ({ pharmacy, setPharmacy, token, onRefresh 
   }, []);
 
   useEffect(() => {
-    if (pharmacy.insurance_providers) {
-      setSelectedInsurances(pharmacy.insurance_providers.map(p => p.id));
+    if (pharmacy?.insurance_providers) {
+      setSelectedInsurances(pharmacy.insurance_providers.map((p) => p.id));
+      setHasChanges(false);
     }
   }, [pharmacy]);
 
@@ -24,12 +26,13 @@ const DashboardInsuranceManagement = ({ pharmacy, setPharmacy, token, onRefresh 
     try {
       setError('');
       const response = await fetch('http://localhost:8000/api/v1/insurance/providers/', {
-        headers: { Authorization: `Token ${token}` }
+        headers: { Authorization: `Token ${token}` },
       });
 
       if (!response.ok) throw new Error('Failed to fetch insurance providers');
       const data = await response.json();
-      setAllInsurances(data.results || data);
+      const list = Array.isArray(data) ? data : data.results || [];
+      setAllInsurances(list);
       setLoading(false);
     } catch (err) {
       setError(err.message);
@@ -37,15 +40,9 @@ const DashboardInsuranceManagement = ({ pharmacy, setPharmacy, token, onRefresh 
     }
   };
 
-  const handleInsuranceToggle = (insuranceId) => {
+  const handleSelectionChange = (ids) => {
     setHasChanges(true);
-    setSelectedInsurances(prev => {
-      if (prev.includes(insuranceId)) {
-        return prev.filter(id => id !== insuranceId);
-      } else {
-        return [...prev, insuranceId];
-      }
-    });
+    setSelectedInsurances(ids);
   };
 
   const handleSaveChanges = async () => {
@@ -58,19 +55,20 @@ const DashboardInsuranceManagement = ({ pharmacy, setPharmacy, token, onRefresh 
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Token ${token}`
+          Authorization: `Token ${token}`,
         },
         body: JSON.stringify({
-          insurance_provider_ids: selectedInsurances
-        })
+          insurance_provider_ids: selectedInsurances,
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to update insurance partners');
       const updatedPharmacy = await response.json();
       setPharmacy(updatedPharmacy);
       setHasChanges(false);
-      setSuccess('Insurance partners updated successfully!');
-      setTimeout(() => setSuccess(''), 3000);
+      setSuccess('Insurance partners updated successfully.');
+      setTimeout(() => setSuccess(''), 4000);
+      onRefresh?.();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -78,150 +76,84 @@ const DashboardInsuranceManagement = ({ pharmacy, setPharmacy, token, onRefresh 
     }
   };
 
+  const handleDiscard = () => {
+    const providers = pharmacy?.insurance_providers || [];
+    setSelectedInsurances(providers.map((p) => p.id));
+    setHasChanges(false);
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <Shield className="text-emerald-600" size={32} />
-          Insurance Partners Management
+    <div className="space-y-8">
+      <div className="border-b border-slate-200 pb-6">
+        <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-slate-900">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+            <Shield className="h-6 w-6" aria-hidden />
+          </span>
+          Insurance partners
         </h1>
-        <p className="text-gray-600 mt-1">Select which insurance providers your pharmacy accepts</p>
+        <p className="mt-2 max-w-2xl text-slate-600">
+          Keep this list aligned with your contracts and counter acceptance policy. Patients rely on it when
+          choosing your pharmacy.
+        </p>
       </div>
 
-      {/* Messages */}
       {error && (
-        <div className="bg-red-100 border border-red-300 rounded-lg p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-700" />
-          <p className="text-red-700">{error}</p>
+        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <p className="text-sm">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="bg-emerald-100 border border-emerald-300 rounded-lg p-4 flex items-center gap-3">
-          <Check className="w-5 h-5 text-emerald-700" />
-          <p className="text-emerald-700">{success}</p>
+        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
+          <Check className="h-5 w-5 shrink-0" />
+          <p className="text-sm font-medium">{success}</p>
         </div>
       )}
 
-      {/* Insurance Selection Grid */}
-      {allInsurances.length > 0 ? (
-        <>
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <p className="text-sm text-gray-600">
-                  Selected: <span className="font-bold text-emerald-600">{selectedInsurances.length}</span> of {allInsurances.length}
-                </p>
-              </div>
-            </div>
+      <InsurancePartnerSelector
+        providers={allInsurances}
+        selectedIds={selectedInsurances}
+        onSelectedIdsChange={handleSelectionChange}
+      />
 
-            {/* Insurance Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allInsurances.map(insurance => {
-                const isSelected = selectedInsurances.includes(insurance.id);
-                return (
-                  <div
-                    key={insurance.id}
-                    onClick={() => handleInsuranceToggle(insurance.id)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      isSelected
-                        ? 'border-emerald-500 bg-emerald-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all mt-1 ${
-                          isSelected
-                            ? 'bg-emerald-600 border-emerald-600'
-                            : 'border-gray-300'
-                        }`}
-                      >
-                        {isSelected && <Check size={16} className="text-white" />}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{insurance.name}</h3>
-                        <p className="text-xs text-gray-500 mt-1">Code: {insurance.code}</p>
-                        {insurance.description && (
-                          <p className="text-sm text-gray-600 mt-2">{insurance.description}</p>
-                        )}
-                        {insurance.contact_phone && (
-                          <p className="text-xs text-gray-500 mt-2">📞 {insurance.contact_phone}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          {hasChanges && (
-            <div className="flex gap-4">
-              <button
-                onClick={handleSaveChanges}
-                disabled={saving}
-                className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <Loader size={18} className="animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Check size={18} />
-                    Save Insurance Partners
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedInsurances(pharmacy.insurance_providers.map(p => p.id));
-                  setHasChanges(false);
-                }}
-                disabled={saving}
-                className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <X size={18} />
-                Discard Changes
-              </button>
-            </div>
-          )}
-
-          {/* Current Selection Summary */}
-          {selectedInsurances.length > 0 && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Currently Selected Partners</h3>
-              <div className="flex flex-wrap gap-2">
-                {allInsurances
-                  .filter(ins => selectedInsurances.includes(ins.id))
-                  .map(ins => (
-                    <span
-                      key={ins.id}
-                      className="inline-block px-3 py-1 bg-emerald-600 text-white rounded-full text-sm font-semibold"
-                    >
-                      {ins.name}
-                    </span>
-                  ))}
-              </div>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No insurance providers available</p>
+      {hasChanges && (
+        <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur-sm sm:flex-row">
+          <button
+            type="button"
+            onClick={handleSaveChanges}
+            disabled={saving}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <Loader className="h-5 w-5 animate-spin" />
+                Saving…
+              </>
+            ) : (
+              <>
+                <Check className="h-5 w-5" />
+                Save changes
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={handleDiscard}
+            disabled={saving}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-6 py-3 font-semibold text-slate-800 transition hover:bg-slate-100 disabled:opacity-50"
+          >
+            <X className="h-5 w-5" />
+            Discard
+          </button>
         </div>
       )}
     </div>

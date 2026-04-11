@@ -1,180 +1,153 @@
-import React, { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import useRouter from '../hooks/useRouter'
-import { Users, Package, DollarSign, AlertCircle, TrendingUp } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { navigateTo } from '../utils/navigation';
+import AdminLayout from '../components/AdminLayout';
+import {
+  Building2,
+  Pill,
+  Shield,
+  Users,
+  Package,
+  BarChart3,
+  AlertCircle,
+} from 'lucide-react';
+
+const API = 'http://localhost:8000/api/v1';
 
 export default function AdminDashboard() {
-  const { user, token } = useAuth()
-  const navigate = useRouter()
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const { user, token } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
-      navigate('/unauthorized')
-      return
+      navigateTo('/unauthorized');
+      return;
     }
-    fetchAdminStats()
-  }, [])
+    (async () => {
+      try {
+        const headers = { Authorization: `Token ${token}` };
+        const [phRes, medRes, insRes, usrRes, stockRes] = await Promise.all([
+          fetch(`${API}/pharmacies/`, { headers }),
+          fetch(`${API}/medicines/`, { headers }),
+          fetch(`${API}/insurance/providers/`, { headers }),
+          fetch(`${API}/auth/admin/users/`, { headers }),
+          fetch(`${API}/inventory/stock/`, { headers }),
+        ]);
 
-  const fetchAdminStats = async () => {
-    try {
-      const [pharmaciesRes, medicinesRes, insuranceRes] = await Promise.all([
-        fetch('http://localhost:8000/api/v1/pharmacies/?limit=1', {
-          headers: { Authorization: `Token ${token}` }
-        }),
-        fetch('http://localhost:8000/api/v1/medicines/?limit=1', {
-          headers: { Authorization: `Token ${token}` }
-        }),
-        fetch('http://localhost:8000/api/v1/insurance/providers/?limit=1', {
-          headers: { Authorization: `Token ${token}` }
-        })
-      ])
+        const ph = await phRes.json();
+        const med = await medRes.json();
+        const ins = await insRes.json();
+        const usr = await usrRes.json();
+        const st = await stockRes.json();
 
-      const pharmacies = await pharmaciesRes.json()
-      const medicines = await medicinesRes.json()
-      const insurance = await insuranceRes.json()
+        const len = (data) => (Array.isArray(data) ? data.length : data.count || 0);
 
-      setStats({
-        pharmacies: pharmacies.count || 0,
-        medicines: medicines.count || 0,
-        insurances: insurance.count || 0,
-        users: 0
-      })
-      setError('')
-    } catch (err) {
-      setError('Failed to load statistics')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
+        setStats({
+          pharmacies: len(ph),
+          medicines: len(med),
+          insurances: len(ins),
+          users: usrRes.ok ? len(usr) : 0,
+          stockLines: stRes.ok ? len(st) : 0,
+        });
+        if (!usrRes.ok) {
+          setError('Could not load user counts (check admin API).');
+        } else {
+          setError('');
+        }
+      } catch (e) {
+        setError('Failed to load statistics');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [user, token]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-600"></div>
-      </div>
-    )
+      <AdminLayout active="dashboard">
+        <div className="flex justify-center py-24">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+        </div>
+      </AdminLayout>
+    );
   }
 
-  const statCards = [
-    { label: 'Total Pharmacies', value: stats?.pharmacies || 0, icon: Package, color: 'emerald' },
-    { label: 'Total Medicines', value: stats?.medicines || 0, icon: DollarSign, color: 'blue' },
-    { label: 'Insurance Providers', value: stats?.insurances || 0, icon: TrendingUp, color: 'purple' },
-    { label: 'Users', value: stats?.users || 0, icon: Users, color: 'orange' }
-  ]
+  const cards = [
+    { label: 'Pharmacies', value: stats?.pharmacies ?? 0, icon: Building2, path: '/admin/pharmacies', color: 'emerald' },
+    { label: 'Medicines (catalog)', value: stats?.medicines ?? 0, icon: Pill, path: '/admin/medicines', color: 'blue' },
+    { label: 'Insurance providers', value: stats?.insurances ?? 0, icon: Shield, path: '/admin/insurance', color: 'purple' },
+    { label: 'User accounts', value: stats?.users ?? 0, icon: Users, path: '/admin/users', color: 'orange' },
+    { label: 'Stock lines (all)', value: stats?.stockLines ?? 0, icon: Package, path: '/admin/inventory', color: 'teal' },
+  ];
+
+  const colorMap = {
+    emerald: 'from-emerald-500 to-emerald-600',
+    blue: 'from-blue-500 to-blue-600',
+    purple: 'from-purple-500 to-purple-600',
+    orange: 'from-orange-500 to-orange-600',
+    teal: 'from-teal-500 to-teal-600',
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">System Overview & Management</p>
-        </div>
-
-        {error && (
-          <div className="mb-6 bg-red-100 border border-red-300 rounded-lg p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-700" />
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((card, idx) => {
-            const Icon = card.icon
-            const colors = {
-              emerald: 'from-emerald-500 to-emerald-600',
-              blue: 'from-blue-500 to-blue-600',
-              purple: 'from-purple-500 to-purple-600',
-              orange: 'from-orange-500 to-orange-600'
-            }
-            
-            return (
-              <div key={idx} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm mb-1">{card.label}</p>
-                    <p className="text-3xl font-bold text-gray-900">{card.value}</p>
-                  </div>
-                  <div className={`bg-gradient-to-br ${colors[card.color]} p-3 rounded-lg`}>
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Management Links */}
-        <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Management</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={() => navigate('/admin/users')}
-              className="p-4 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-lg text-left transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition">
-                  <Users className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">User Management</h3>
-                  <p className="text-sm text-gray-600">Manage users and roles</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/admin/medicines')}
-              className="p-4 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-lg text-left transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition">
-                  <Package className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Medicine Management</h3>
-                  <p className="text-sm text-gray-600">Add, edit, or remove medicines</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/admin/insurance')}
-              className="p-4 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-lg text-left transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition">
-                  <DollarSign className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Insurance Management</h3>
-                  <p className="text-sm text-gray-600">Manage insurance providers</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/reports')}
-              className="p-4 bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-lg text-left transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition">
-                  <TrendingUp className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Reports</h3>
-                  <p className="text-sm text-gray-600">View system reports and analytics</p>
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
+    <AdminLayout active="dashboard">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-900">System overview</h1>
+        <p className="text-slate-600 mt-1">
+          Manage pharmacies, catalog, insurance, users, and monitor inventory from the sidebar.
+        </p>
       </div>
-    </div>
-  )
+
+      {error && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <button
+              key={card.label}
+              type="button"
+              onClick={() => navigateTo(card.path)}
+              className="text-left rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">{card.label}</p>
+                  <p className="text-3xl font-bold text-slate-900 mt-1">{card.value}</p>
+                </div>
+                <div className={`rounded-xl bg-gradient-to-br p-3 ${colorMap[card.color]}`}>
+                  <Icon className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <BarChart3 className="h-5 w-5 text-emerald-600" />
+          <h2 className="text-lg font-bold text-slate-900">Quick actions</h2>
+        </div>
+        <p className="text-slate-600 text-sm mb-4">
+          Use the left navigation for full CRUD screens. Run backend seed scripts to load locations,
+          insurances, and the national medicine catalog when setting up a new environment.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigateTo('/reports')}
+          className="rounded-lg bg-slate-900 text-white px-4 py-2.5 text-sm font-semibold hover:bg-slate-800"
+        >
+          Open reports
+        </button>
+      </div>
+    </AdminLayout>
+  );
 }

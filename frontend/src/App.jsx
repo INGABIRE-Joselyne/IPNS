@@ -25,6 +25,9 @@ import AdminUserManagement from './pages/AdminUserManagement'
 import MedicineManagement from './pages/MedicineManagement'
 import InsuranceManagement from './pages/InsuranceManagement'
 import Reports from './pages/Reports'
+import AdminPharmacyManagement from './pages/AdminPharmacyManagement'
+import AdminInventoryOverview from './pages/AdminInventoryOverview'
+import AdminMedicineCategories from './pages/AdminMedicineCategories'
 
 // Patient Pages (old)
 import Home from './pages/Home'
@@ -91,10 +94,29 @@ const AppContent = () => {
 
   const renderAdminPage = () => {
     switch (currentPage) {
+      case '/admin':
       case '/admin/dashboard':
         return (
           <ProtectedRoute requiredRole="admin">
             <AdminDashboard />
+          </ProtectedRoute>
+        )
+      case '/admin/pharmacies':
+        return (
+          <ProtectedRoute requiredRole="admin">
+            <AdminPharmacyManagement />
+          </ProtectedRoute>
+        )
+      case '/admin/inventory':
+        return (
+          <ProtectedRoute requiredRole="admin">
+            <AdminInventoryOverview />
+          </ProtectedRoute>
+        )
+      case '/admin/categories':
+        return (
+          <ProtectedRoute requiredRole="admin">
+            <AdminMedicineCategories />
           </ProtectedRoute>
         )
       case '/admin/users':
@@ -140,7 +162,7 @@ const AppContent = () => {
   }
 
   // Admin routes
-  if (currentPage.startsWith('/admin/') || currentPage === '/reports') {
+  if (currentPage === '/admin' || currentPage.startsWith('/admin/') || currentPage === '/reports') {
     return renderAdminPage()
   }
 

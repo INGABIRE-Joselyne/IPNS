@@ -1,240 +1,335 @@
-import React, { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import useRouter from '../hooks/useRouter'
-import { Plus, Trash2, Edit2, AlertCircle, Search } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { navigateTo } from '../utils/navigation';
+import AdminLayout from '../components/AdminLayout';
+import { Plus, Trash2, Edit2, AlertCircle, Search } from 'lucide-react';
+
+const API = 'http://localhost:8000/api/v1';
+
+const emptyForm = {
+  name: '',
+  generic_name: '',
+  strength: '',
+  unit: 'tablet',
+  manufacturer: '',
+  description: '',
+  is_active: true,
+  category_id: '',
+};
 
 export default function MedicineManagement() {
-  const { user, token } = useAuth()
-  const navigate = useRouter()
-  const [medicines, setMedicines] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    unit: 'tablet'
-  })
+  const { user, token } = useAuth();
+  const [medicines, setMedicines] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState(emptyForm);
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
-      navigate('/unauthorized')
-      return
+      navigateTo('/unauthorized');
+      return;
     }
-    fetchMedicines()
-  }, [])
+    fetchMedicines();
+    fetch(`${API}/medicines/categories/`)
+      .then((r) => r.json())
+      .then((data) => setCategories(Array.isArray(data) ? data : data.results || []))
+      .catch(() => {});
+  }, []);
 
   const fetchMedicines = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/medicines/', {
-        headers: { Authorization: `Token ${token}` }
-      })
-      if (!response.ok) throw new Error('Failed to fetch medicines')
-      const data = await response.json()
-      setMedicines(Array.isArray(data) ? data : data.results || [])
-      setError('')
+      const response = await fetch(`${API}/medicines/`, {
+        headers: { Authorization: `Token ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch medicines');
+      const data = await response.json();
+      setMedicines(Array.isArray(data) ? data : data.results || []);
+      setError('');
     } catch (err) {
-      setError('Failed to load medicines')
-      console.error(err)
+      setError('Failed to load medicines');
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const buildPayload = () => {
+    const payload = {
+      name: formData.name,
+      generic_name: formData.generic_name || '',
+      strength: formData.strength || '',
+      unit: formData.unit || 'tablet',
+      manufacturer: formData.manufacturer || '',
+      description: formData.description || '',
+      is_active: !!formData.is_active,
+    };
+    if (formData.category_id) {
+      payload.category_id = parseInt(formData.category_id, 10);
+    } else {
+      payload.category_id = null;
+    }
+    return payload;
+  };
 
   const handleSaveMedicine = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      const url = editingId
-        ? `http://localhost:8000/api/v1/medicines/${editingId}/`
-        : 'http://localhost:8000/api/v1/medicines/'
-      
-      const method = editingId ? 'PATCH' : 'POST'
-      
+      const url = editingId ? `${API}/medicines/${editingId}/` : `${API}/medicines/`;
+      const method = editingId ? 'PATCH' : 'POST';
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
+          Authorization: `Token ${token}`,
         },
-        body: JSON.stringify(formData)
-      })
-      
-      if (!response.ok) throw new Error('Failed to save medicine')
-      
-      setFormData({ name: '', description: '', price: '', unit: 'tablet' })
-      setShowForm(false)
-      setEditingId(null)
-      fetchMedicines()
-    } catch (err) {
-      setError('Failed to save medicine')
-      console.error(err)
-    }
-  }
+        body: JSON.stringify(buildPayload()),
+      });
 
-  const handleEdit = (medicine) => {
-    setFormData(medicine)
-    setEditingId(medicine.id)
-    setShowForm(true)
-  }
+      if (!response.ok) throw new Error('Failed to save medicine');
+
+      setFormData(emptyForm);
+      setShowForm(false);
+      setEditingId(null);
+      fetchMedicines();
+    } catch (err) {
+      setError('Failed to save medicine');
+      console.error(err);
+    }
+  };
+
+  const handleEdit = async (medicine) => {
+    let m = medicine;
+    try {
+      const res = await fetch(`${API}/medicines/${medicine.id}/`, {
+        headers: { Authorization: `Token ${token}` },
+      });
+      if (res.ok) m = await res.json();
+    } catch (_) {}
+    setFormData({
+      name: m.name || '',
+      generic_name: m.generic_name || '',
+      strength: m.strength || '',
+      unit: m.unit || 'tablet',
+      manufacturer: m.manufacturer || '',
+      description: m.description || '',
+      is_active: m.is_active !== false,
+      category_id: m.category?.id != null ? String(m.category.id) : m.category_id != null ? String(m.category_id) : '',
+    });
+    setEditingId(medicine.id);
+    setShowForm(true);
+  };
 
   const handleDeleteMedicine = async (medicineId) => {
-    if (!window.confirm('Are you sure you want to delete this medicine?')) return
-    
-    try {
-      const response = await fetch(`http://localhost:8000/api/v1/medicines/${medicineId}/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Token ${token}` }
-      })
-      if (!response.ok) throw new Error('Failed to delete medicine')
-      fetchMedicines()
-    } catch (err) {
-      setError('Failed to delete medicine')
-      console.error(err)
-    }
-  }
+    if (!window.confirm('Delete this medicine from the catalog?')) return;
 
-  const filteredMedicines = medicines.filter(m =>
-    m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (m.description || '').toLowerCase().includes(searchTerm.toLowerCase())
-  )
+    try {
+      const response = await fetch(`${API}/medicines/${medicineId}/`, {
+        method: 'DELETE',
+        headers: { Authorization: `Token ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to delete medicine');
+      fetchMedicines();
+    } catch (err) {
+      setError('Failed to delete medicine');
+      console.error(err);
+    }
+  };
+
+  const filteredMedicines = medicines.filter(
+    (m) =>
+      m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (m.generic_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500"></div>
-      </div>
-    )
+      <AdminLayout active="medicines">
+        <div className="flex justify-center py-24">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+        </div>
+      </AdminLayout>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Medicine Management</h1>
-            <p className="text-gray-600">Add, edit, or remove medicines from the system</p>
-          </div>
-          <button
-            onClick={() => {
-              setShowForm(!showForm)
-              setEditingId(null)
-              if (!showForm) setFormData({ name: '', description: '', price: '', unit: 'tablet' })
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition"
-          >
-            <Plus className="w-4 h-4" />
-            Add Medicine
-          </button>
+    <AdminLayout active="medicines">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Medicines</h1>
+          <p className="text-slate-600 mt-1">Maintain the national catalog (names, strengths, categories).</p>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            setShowForm(!showForm);
+            setEditingId(null);
+            if (!showForm) setFormData(emptyForm);
+          }}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white hover:bg-emerald-700"
+        >
+          <Plus className="w-4 h-4" />
+          Add medicine
+        </button>
+      </div>
 
-        {error && (
-          <div className="mb-6 bg-red-100 border border-red-300 rounded-lg p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-700" />
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
+      {error && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          {error}
+        </div>
+      )}
 
-        {/* Add/Edit Form */}
-        {showForm && (
-          <div className="mb-8 bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">{editingId ? 'Edit Medicine' : 'Add New Medicine'}</h3>
-            <form onSubmit={handleSaveMedicine} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Medicine Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  required
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                />
-                <input
-                  type="number"
-                  placeholder="Price"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: e.target.value})}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-              <textarea
-                placeholder="Description"
-                value={formData.description || ''}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                rows="3"
-              ></textarea>
+      {showForm && (
+        <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">
+            {editingId ? 'Edit medicine' : 'New medicine'}
+          </h3>
+          <form onSubmit={handleSaveMedicine} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                required
+                placeholder="Name *"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              />
+              <input
+                placeholder="Generic name"
+                value={formData.generic_name}
+                onChange={(e) => setFormData({ ...formData, generic_name: e.target.value })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              />
+              <input
+                placeholder="Strength (e.g. 500mg)"
+                value={formData.strength}
+                onChange={(e) => setFormData({ ...formData, strength: e.target.value })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              />
               <select
                 value={formData.unit}
-                onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-emerald-500"
+                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
               >
                 <option value="tablet">Tablet</option>
                 <option value="capsule">Capsule</option>
-                <option value="ml">ML</option>
-                <option value="bottle">Bottle</option>
-                <option value="box">Box</option>
+                <option value="ml">ml</option>
+                <option value="injection">Injection</option>
+                <option value="cream">Cream</option>
+                <option value="drops">Drops</option>
+                <option value="inhaler">Inhaler</option>
+                <option value="sachet">Sachet</option>
+                <option value="infusion">Infusion</option>
               </select>
-              <div className="flex gap-4">
-                <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition">
-                  {editingId ? 'Update' : 'Create'} Medicine
-                </button>
-                <button type="button" onClick={() => { setShowForm(false); setEditingId(null) }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-lg transition">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search medicines..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        </div>
-
-        {/* Medicines List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMedicines.map(medicine => (
-            <div key={medicine.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{medicine.name}</h3>
-              <p className="text-gray-600 text-sm mb-4">{medicine.description || 'No description'}</p>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-emerald-600 font-semibold">${medicine.price || '0.00'}</span>
-                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded">{medicine.unit}</span>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(medicine)}
-                  className="flex-1 p-2 hover:bg-blue-900/30 text-blue-400 rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteMedicine(medicine.id)}
-                  className="flex-1 p-2 hover:bg-red-900/30 text-red-400 rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </div>
+              <input
+                placeholder="Manufacturer"
+                value={formData.manufacturer}
+                onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              />
+              <select
+                value={formData.category_id}
+                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              >
+                <option value="">No category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          ))}
+            <textarea
+              placeholder="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              rows={2}
+            />
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              />
+              Active in catalog
+            </label>
+            <div className="flex gap-2">
+              <button type="submit" className="rounded-lg bg-emerald-600 px-4 py-2 text-white font-semibold">
+                {editingId ? 'Update' : 'Create'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                }}
+                className="rounded-lg border border-slate-200 px-4 py-2 font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
+      )}
+
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search medicines…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4"
+        />
       </div>
-    </div>
-  )
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filteredMedicines.map((medicine) => (
+          <div
+            key={medicine.id}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col"
+          >
+            <h3 className="text-lg font-semibold text-slate-900">{medicine.name}</h3>
+            {medicine.generic_name && (
+              <p className="text-sm text-slate-500 mt-0.5">{medicine.generic_name}</p>
+            )}
+            <p className="text-slate-600 text-sm mt-2 line-clamp-2">
+              {[medicine.strength, medicine.unit].filter(Boolean).join(' · ') || '—'}
+            </p>
+            {medicine.category_name && (
+              <span className="mt-2 inline-block rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                {medicine.category_name}
+              </span>
+            )}
+            {medicine.is_active === false && (
+              <span className="mt-2 text-xs font-semibold text-amber-700">Inactive</span>
+            )}
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleEdit(medicine)}
+                className="flex-1 rounded-lg border border-slate-200 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 flex items-center justify-center gap-2"
+              >
+                <Edit2 className="w-4 h-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteMedicine(medicine.id)}
+                className="flex-1 rounded-lg border border-red-200 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </AdminLayout>
+  );
 }

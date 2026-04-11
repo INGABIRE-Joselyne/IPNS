@@ -139,14 +139,18 @@ const AddMedicineModal = ({ isOpen, onClose, onSave, token, loading }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full shadow-xl border border-gray-200 max-h-96 overflow-y-auto">
+      <div className="bg-white rounded-xl max-w-lg w-full shadow-xl border border-gray-200 max-h-[min(85vh,640px)] overflow-y-auto">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
-          <h2 className="text-xl font-bold text-gray-900">Add Medicine to Inventory</h2>
+        <div className="flex justify-between items-start gap-4 p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Add to inventory</h2>
+            <p className="text-xs text-gray-500 mt-1">Search the national catalog or create a custom medicine.</p>
+          </div>
           <button
+            type="button"
             onClick={onClose}
             disabled={loading || creatingMedicine}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors shrink-0"
           >
             <X size={24} />
           </button>

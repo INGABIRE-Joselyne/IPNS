@@ -19,7 +19,8 @@ const Login = () => {
     const result = await login(email, password);
     
     if (result.success) {
-      window.location.pathname = '/dashboard';
+      const role = result.user?.role;
+      window.location.pathname = role === 'admin' ? '/admin/dashboard' : '/dashboard';
     } else {
       setError(result.error || 'Login failed. Please try again.');
     }

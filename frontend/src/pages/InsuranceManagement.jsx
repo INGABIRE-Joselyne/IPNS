@@ -1,245 +1,292 @@
-import React, { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import useRouter from '../hooks/useRouter'
-import { Plus, Trash2, Edit2, AlertCircle, Search, Phone, Mail } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { navigateTo } from '../utils/navigation';
+import AdminLayout from '../components/AdminLayout';
+import { Plus, Trash2, Edit2, AlertCircle, Search, Phone, Mail } from 'lucide-react';
+
+const API = 'http://localhost:8000/api/v1';
+
+const emptyForm = {
+  name: '',
+  code: '',
+  contact_email: '',
+  contact_phone: '',
+  description: '',
+};
+
+function slugCode(name) {
+  return name
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 20) || 'INS';
+}
 
 export default function InsuranceManagement() {
-  const { user, token } = useAuth()
-  const navigate = useRouter()
-  const [insurances, setInsurances] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [formData, setFormData] = useState({
-    name: '',
-    contact_email: '',
-    contact_phone: '',
-    description: ''
-  })
+  const { user, token } = useAuth();
+  const [insurances, setInsurances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState(emptyForm);
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
-      navigate('/unauthorized')
-      return
+      navigateTo('/unauthorized');
+      return;
     }
-    fetchInsurances()
-  }, [])
+    fetchInsurances();
+  }, []);
 
   const fetchInsurances = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/insurance/providers/', {
-        headers: { Authorization: `Token ${token}` }
-      })
-      if (!response.ok) throw new Error('Failed to fetch insurances')
-      const data = await response.json()
-      setInsurances(Array.isArray(data) ? data : data.results || [])
-      setError('')
+      const response = await fetch(`${API}/insurance/providers/`, {
+        headers: { Authorization: `Token ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch insurances');
+      const data = await response.json();
+      setInsurances(Array.isArray(data) ? data : data.results || []);
+      setError('');
     } catch (err) {
-      setError('Failed to load insurance providers')
-      console.error(err)
+      setError('Failed to load insurance providers');
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSaveInsurance = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      const url = editingId
-        ? `http://localhost:8000/api/v1/insurance/providers/${editingId}/`
-        : 'http://localhost:8000/api/v1/insurance/providers/'
-      
-      const method = editingId ? 'PATCH' : 'POST'
-      
+      const payload = {
+        name: formData.name,
+        code: (formData.code || slugCode(formData.name)).toUpperCase().slice(0, 20),
+        contact_email: formData.contact_email || null,
+        contact_phone: formData.contact_phone || '',
+        description: formData.description || '',
+      };
+      const url = editingId ? `${API}/insurance/providers/${editingId}/` : `${API}/insurance/providers/`;
+      const method = editingId ? 'PATCH' : 'POST';
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Token ${token}`
+          Authorization: `Token ${token}`,
         },
-        body: JSON.stringify(formData)
-      })
-      
-      if (!response.ok) throw new Error('Failed to save insurance')
-      
-      setFormData({ name: '', contact_email: '', contact_phone: '', description: '' })
-      setShowForm(false)
-      setEditingId(null)
-      fetchInsurances()
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Failed to save insurance');
+
+      setFormData(emptyForm);
+      setShowForm(false);
+      setEditingId(null);
+      fetchInsurances();
     } catch (err) {
-      setError('Failed to save insurance provider')
-      console.error(err)
+      setError('Failed to save insurance provider');
+      console.error(err);
     }
-  }
+  };
 
   const handleEdit = (insurance) => {
-    setFormData(insurance)
-    setEditingId(insurance.id)
-    setShowForm(true)
-  }
+    setFormData({
+      name: insurance.name || '',
+      code: insurance.code || '',
+      contact_email: insurance.contact_email || '',
+      contact_phone: insurance.contact_phone || '',
+      description: insurance.description || '',
+    });
+    setEditingId(insurance.id);
+    setShowForm(true);
+  };
 
   const handleDeleteInsurance = async (insuranceId) => {
-    if (!window.confirm('Are you sure you want to delete this insurance provider?')) return
-    
-    try {
-      const response = await fetch(`http://localhost:8000/api/v1/insurance/providers/${insuranceId}/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Token ${token}` }
-      })
-      if (!response.ok) throw new Error('Failed to delete insurance')
-      fetchInsurances()
-    } catch (err) {
-      setError('Failed to delete insurance provider')
-      console.error(err)
-    }
-  }
+    if (!window.confirm('Are you sure you want to delete this insurance provider?')) return;
 
-  const filteredInsurances = insurances.filter(i =>
-    i.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (i.description || '').toLowerCase().includes(searchTerm.toLowerCase())
-  )
+    try {
+      const response = await fetch(`${API}/insurance/providers/${insuranceId}/`, {
+        method: 'DELETE',
+        headers: { Authorization: `Token ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to delete insurance');
+      fetchInsurances();
+    } catch (err) {
+      setError('Failed to delete insurance provider');
+      console.error(err);
+    }
+  };
+
+  const filteredInsurances = insurances.filter(
+    (i) =>
+      i.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (i.code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (i.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500"></div>
-      </div>
-    )
+      <AdminLayout active="insurance">
+        <div className="flex justify-center py-24">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+        </div>
+      </AdminLayout>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Insurance Management</h1>
-            <p className="text-gray-600">Add, edit, or remove insurance providers from the system</p>
-          </div>
-          <button
-            onClick={() => {
-              setShowForm(!showForm)
-              setEditingId(null)
-              if (!showForm) setFormData({ name: '', contact_email: '', contact_phone: '', description: '' })
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition"
-          >
-            <Plus className="w-4 h-4" />
-            Add Insurance
-          </button>
+    <AdminLayout active="insurance">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Insurance providers</h1>
+          <p className="text-slate-600 mt-1">Codes must be unique; used across pharmacy registration.</p>
         </div>
+        <button
+          type="button"
+          onClick={() => {
+            setShowForm(!showForm);
+            setEditingId(null);
+            if (!showForm) setFormData(emptyForm);
+          }}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white hover:bg-emerald-700"
+        >
+          <Plus className="w-4 h-4" />
+          Add provider
+        </button>
+      </div>
 
-        {error && (
-          <div className="mb-6 bg-red-100 border border-red-300 rounded-lg p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-700" />
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
+      {error && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          {error}
+        </div>
+      )}
 
-        {/* Add/Edit Form */}
-        {showForm && (
-          <div className="mb-8 bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">{editingId ? 'Edit Insurance' : 'Add New Insurance'}</h3>
-            <form onSubmit={handleSaveInsurance} className="space-y-4">
+      {showForm && (
+        <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">
+            {editingId ? 'Edit provider' : 'New provider'}
+          </h3>
+          <form onSubmit={handleSaveInsurance} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="text"
-                placeholder="Insurance Provider Name"
+                placeholder="Name *"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="email"
-                  placeholder="Contact Email"
-                  value={formData.contact_email}
-                  onChange={(e) => setFormData({...formData, contact_email: e.target.value})}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                />
-                <input
-                  type="tel"
-                  placeholder="Contact Phone"
-                  value={formData.contact_phone}
-                  onChange={(e) => setFormData({...formData, contact_phone: e.target.value})}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-              <textarea
-                placeholder="Description"
-                value={formData.description || ''}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                rows="3"
-              ></textarea>
-              <div className="flex gap-4">
-                <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition">
-                  {editingId ? 'Update' : 'Create'} Insurance
-                </button>
-                <button type="button" onClick={() => { setShowForm(false); setEditingId(null) }} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-lg transition">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search insurance providers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        </div>
-
-        {/* Insurance List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredInsurances.map(insurance => (
-            <div key={insurance.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">{insurance.name}</h3>
-              <p className="text-gray-600 text-sm mb-4">{insurance.description || 'No description'}</p>
-              <div className="space-y-2 mb-4">
-                {insurance.contact_email && (
-                  <div className="flex items-center gap-2 text-gray-600 text-sm">
-                    <Mail className="w-4 h-4 text-gray-500" />
-                    {insurance.contact_email}
-                  </div>
-                )}
-                {insurance.contact_phone && (
-                  <div className="flex items-center gap-2 text-gray-600 text-sm">
-                    <Phone className="w-4 h-4 text-gray-500" />
-                    {insurance.contact_phone}
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(insurance)}
-                  className="flex-1 p-2 hover:bg-blue-900/30 text-blue-400 rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteInsurance(insurance.id)}
-                  className="flex-1 p-2 hover:bg-red-900/30 text-red-400 rounded-lg transition flex items-center justify-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </div>
+              <input
+                type="text"
+                placeholder="Code (e.g. RSSB) — auto if empty"
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                maxLength={20}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              />
             </div>
-          ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="email"
+                placeholder="Contact email"
+                value={formData.contact_email}
+                onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              />
+              <input
+                type="tel"
+                placeholder="Contact phone"
+                value={formData.contact_phone}
+                onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              />
+            </div>
+            <textarea
+              placeholder="Description"
+              value={formData.description || ''}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-900"
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <button type="submit" className="rounded-lg bg-emerald-600 px-4 py-2 text-white font-semibold">
+                {editingId ? 'Update' : 'Create'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                }}
+                className="rounded-lg border border-slate-200 px-4 py-2 font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
+      )}
+
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search by name, code, or description…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4"
+        />
       </div>
-    </div>
-  )
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {filteredInsurances.map((insurance) => (
+          <div key={insurance.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <h3 className="text-lg font-semibold text-slate-900">{insurance.name}</h3>
+              {insurance.code && (
+                <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-700">
+                  {insurance.code}
+                </span>
+              )}
+            </div>
+            <p className="text-slate-600 text-sm mb-4">{insurance.description || 'No description'}</p>
+            <div className="space-y-2 mb-4 text-sm text-slate-600">
+              {insurance.contact_email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-slate-400" />
+                  {insurance.contact_email}
+                </div>
+              )}
+              {insurance.contact_phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-slate-400" />
+                  {insurance.contact_phone}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleEdit(insurance)}
+                className="flex-1 rounded-lg border border-slate-200 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 flex items-center justify-center gap-2"
+              >
+                <Edit2 className="w-4 h-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteInsurance(insurance.id)}
+                className="flex-1 rounded-lg border border-red-200 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </AdminLayout>
+  );
 }

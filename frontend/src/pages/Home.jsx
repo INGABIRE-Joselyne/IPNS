@@ -15,7 +15,7 @@ const Home = () => {
     setIsLoading(true);
     try {
       const data = await apiGet(endpoints.medicineSearch, { q: searchTerm });
-      setMedicines(data);
+      setMedicines(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Search failed:', error);
       setMedicines([]);

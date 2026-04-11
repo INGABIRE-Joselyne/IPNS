@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Phone, Mail, Shield, AlertCircle, ArrowLeft } from 'lucide-react';
 import { apiGet, endpoints } from '../utils/api';
 
+const API_BASE = 'http://localhost:8000';
+
 const PharmacyDetails = ({ pharmacyId }) => {
   const [pharmacy, setPharmacy] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,12 +42,26 @@ const PharmacyDetails = ({ pharmacyId }) => {
 
   const getStatusDisplay = (status) => {
     const map = {
-      open: '🟢 Open',
-      closing_soon: '🟡 Closing Soon',
-      closed: '🔴 Closed',
+      open: 'Open',
+      closing_soon: 'Closing soon',
+      closed: 'Closed',
     };
     return map[status] || status;
   };
+
+  const logoSrc = (path) => {
+    if (!path) return null;
+    if (typeof path === 'string' && path.startsWith('http')) return path;
+    return `${API_BASE}${path}`;
+  };
+
+  const districtLabel = pharmacy
+    ? pharmacy.district_name || pharmacy.sector?.district?.name || null
+    : null;
+  const sectorLabel = pharmacy ? pharmacy.sector_name || pharmacy.sector?.name || null : null;
+  const provinceLabel = pharmacy
+    ? pharmacy.province_name || pharmacy.sector?.district?.province?.name || null
+    : null;
 
   if (isLoading) {
     return (
@@ -95,9 +111,9 @@ const PharmacyDetails = ({ pharmacyId }) => {
         {/* Header */}
         <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8 shadow-sm">
           {/* Pharmacy Logo */}
-          {pharmacy.logo && (
+          {logoSrc(pharmacy.logo) && (
             <div className="mb-6 flex justify-center">
-              <img src={pharmacy.logo} alt={pharmacy.name} className="h-24 w-auto object-contain rounded-lg" />
+              <img src={logoSrc(pharmacy.logo)} alt="" className="h-24 w-auto object-contain rounded-lg" />
             </div>
           )}
           
@@ -130,15 +146,22 @@ const PharmacyDetails = ({ pharmacyId }) => {
                 <div className="flex items-start gap-3">
                   <MapPin className="text-emerald-600 flex-shrink-0 mt-1" size={20} />
                   <div>
+                    <p className="font-semibold text-gray-900">Province</p>
+                    <p className="text-gray-600">{provinceLabel || 'Not available'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="text-emerald-600 flex-shrink-0 mt-1" size={20} />
+                  <div>
                     <p className="font-semibold text-gray-900">District</p>
-                    <p className="text-gray-600">{pharmacy.district_name || 'Not available'}</p>
+                    <p className="text-gray-600">{districtLabel || 'Not available'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <MapPin className="text-emerald-600 flex-shrink-0 mt-1" size={20} />
                   <div>
                     <p className="font-semibold text-gray-900">Sector</p>
-                    <p className="text-gray-600">{pharmacy.sector_name || 'Not available'}</p>
+                    <p className="text-gray-600">{sectorLabel || 'Not available'}</p>
                   </div>
                 </div>
               </div>

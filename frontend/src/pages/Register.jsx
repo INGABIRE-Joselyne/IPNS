@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, ChevronLeft, AlertCircle, Store, MapPin, Clock, Lock, Upload, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, AlertCircle, Store, MapPin, Clock, Lock, Upload, X, Shield } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { ProgressBar } from '../components/Cards';
+import InsurancePartnerSelector from '../components/InsurancePartnerSelector';
 import logo from '../assets/images/LOGO.png';
 
 const Register = () => {
@@ -115,16 +116,8 @@ const Register = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    
-    if (type === 'checkbox') {
-      const insuranceIds = checked
-        ? [...formData.insurance_ids, value]
-        : formData.insurance_ids.filter(id => id !== value);
-      setFormData({ ...formData, insurance_ids: insuranceIds });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleLogoChange = (e) => {
@@ -211,9 +204,8 @@ const Register = () => {
     data.append('closing_time', formData.closing_time);
     data.append('password', formData.password);
     
-    // Add insurance IDs
-    formData.insurance_ids.forEach(id => {
-      data.append('insurance_ids', parseInt(id));
+    formData.insurance_ids.forEach((id) => {
+      data.append('insurance_ids', Number(id));
     });
     
     // Add logo file if selected
@@ -445,38 +437,26 @@ const Register = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-gray-700 text-sm font-semibold mb-4">Insurance Partners</label>
-                  <p className="text-gray-600 text-sm mb-4">Select all insurance providers your pharmacy works with</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {insurances.map(insurance => (
-                      <label key={insurance.id} className={`flex items-start gap-3 cursor-pointer p-4 rounded-lg border-2 transition-all ${
-                        formData.insurance_ids.includes(insurance.id.toString())
-                          ? 'bg-emerald-50 border-emerald-500'
-                          : 'bg-white border-gray-200 hover:border-gray-300'
-                      }`}>
-                        <input
-                          type="checkbox"
-                          name="insurance_ids"
-                          value={insurance.id}
-                          checked={formData.insurance_ids.includes(insurance.id.toString())}
-                          onChange={handleChange}
-                          className="w-5 h-5 mt-1 bg-white border border-gray-300 rounded accent-emerald-500 cursor-pointer flex-shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900">{insurance.name}</p>
-                          {insurance.description && (
-                            <p className="text-gray-600 text-xs mt-1">{insurance.description}</p>
-                          )}
-                        </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-emerald-600 shrink-0" aria-hidden />
+                    <div>
+                      <label className="block text-gray-900 text-sm font-semibold">
+                        Insurance partners
                       </label>
-                    ))}
-                  </div>
-                  {insurances.length === 0 && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-700 text-sm">
-                      No insurance providers available. Please contact support.
+                      <p className="text-gray-600 text-sm">
+                        Select every scheme and insurer you accept. You can change this later in your dashboard.
+                      </p>
                     </div>
-                  )}
+                  </div>
+                  <InsurancePartnerSelector
+                    embedded
+                    providers={insurances}
+                    selectedIds={formData.insurance_ids}
+                    onSelectedIdsChange={(ids) =>
+                      setFormData((prev) => ({ ...prev, insurance_ids: ids }))
+                    }
+                  />
                 </div>
               </div>
             </div>

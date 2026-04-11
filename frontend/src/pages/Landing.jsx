@@ -32,9 +32,9 @@ const Landing = () => {
         const districtsData = await districtsRes.json();
 
         setStats({
-          pharmacies: pharmaciesData.count || 0,
-          medicines: medicinesData.count || 0,
-          districts: districtsData.count || 0,
+          pharmacies: Array.isArray(pharmaciesData) ? pharmaciesData.length : pharmaciesData.count || 0,
+          medicines: Array.isArray(medicinesData) ? medicinesData.length : medicinesData.count || 0,
+          districts: Array.isArray(districtsData) ? districtsData.length : districtsData.count || 0,
           searches: Math.floor(Math.random() * 10000) + 1000
         });
       }

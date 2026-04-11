@@ -111,7 +111,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'pharmacy']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'pharmacy', 'date_joined']
     
     def get_pharmacy(self, obj):
         """Get pharmacy for this user."""
@@ -133,5 +133,36 @@ class UserSerializer(serializers.ModelSerializer):
         """Get user role from UserProfile."""
         try:
             return obj.profile.role
-        except:
+        except Exception:
             return 'pharmacist'  # Default role
+
+
+class AdminCreateUserSerializer(serializers.Serializer):
+    """Admin-only: create a user with email, password, and role."""
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    role = serializers.ChoiceField(choices=[c[0] for c in UserProfile.ROLE_CHOICES])
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value.strip()).exists():
+            raise serializers.ValidationError('A user with this email already exists.')
+        return value.strip().lower()
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['email'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+        )
+        UserProfile.objects.update_or_create(
+            user=user,
+            defaults={'role': validated_data['role']},
+        )
+        return user
+
+
+class AdminUserUpdateSerializer(serializers.Serializer):
+    """Admin-only: change a user's profile role."""
+
+    role = serializers.ChoiceField(choices=[c[0] for c in UserProfile.ROLE_CHOICES])

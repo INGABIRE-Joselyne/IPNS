@@ -9,9 +9,13 @@ class InsuranceProviderViewSet(viewsets.ModelViewSet):
     - List all insurance providers
     - Create, retrieve, update, delete an insurance provider
     - Filter by active status
+
+    Reference data is unpaginated so registration and pharmacy dashboards always receive
+    the full provider list (global API PAGE_SIZE would otherwise truncate at 20).
     """
     queryset = InsuranceProvider.objects.all()
     serializer_class = InsuranceProviderSerializer
+    pagination_class = None
 
     def get_queryset(self):
         queryset = super().get_queryset()

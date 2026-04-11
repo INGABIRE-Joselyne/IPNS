@@ -1,7 +1,11 @@
+from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.filters import SearchFilter, OrderingFilter
+
+from apps.common.permissions import IsAdminRole
 
 from .models import Medicine, MedicineCategory
 from .serializers import (
@@ -14,11 +18,17 @@ from .serializers import (
 class MedicineCategoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint for managing medicine categories.
-    - List all categories
-    - Create, retrieve, update, delete a category
+    - List/retrieve: public
+    - Create, update, delete: admin only
     """
     queryset = MedicineCategory.objects.all()
     serializer_class = MedicineCategorySerializer
+    pagination_class = None
+
+    def get_permissions(self):
+        if self.request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminRole()]
 
 
 class MedicineViewSet(viewsets.ModelViewSet):
@@ -26,9 +36,12 @@ class MedicineViewSet(viewsets.ModelViewSet):
     API endpoint for managing medicines.
     - List all medicines (with search, filter, and pagination)
     - Create, retrieve, update, delete a medicine
+
+    Unpaginated list so pharmacists and admins can search the full national catalog.
     """
     queryset = Medicine.objects.select_related('category')
     serializer_class = MedicineSerializer
+    pagination_class = None
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'generic_name', 'manufacturer']
     ordering_fields = ['name', 'created_at']
@@ -57,17 +70,25 @@ class MedicineViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def search(self, request):
         """
-        Search medicines by name or generic name.
-        Query parameter: q (search term)
+        Search medicines by name, generic name, or manufacturer.
+        Query parameters: q or search (alias)
         """
-        search_term = request.query_params.get('q', '')
-        if not search_term:
-            return Response({'detail': 'Search term required'}, status=400)
-        
-        medicines = Medicine.objects.filter(
-            name__icontains=search_term
-        ) | Medicine.objects.filter(
-            generic_name__icontains=search_term
+        search_term = (
+            request.query_params.get('q', '').strip()
+            or request.query_params.get('search', '').strip()
         )
-        serializer = MedicineListSerializer(medicines[:20], many=True)
+        if not search_term:
+            return Response({'detail': 'Search term required (use q or search)'}, status=400)
+
+        medicines = (
+            Medicine.objects.filter(is_active=True)
+            .filter(
+                Q(name__icontains=search_term)
+                | Q(generic_name__icontains=search_term)
+                | Q(manufacturer__icontains=search_term)
+            )
+            .distinct()
+            .order_by('name')[:200]
+        )
+        serializer = MedicineListSerializer(medicines, many=True)
         return Response(serializer.data)

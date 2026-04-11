@@ -14,7 +14,8 @@ class MedicineSerializer(serializers.ModelSerializer):
         queryset=MedicineCategory.objects.all(),
         write_only=True,
         source='category',
-        required=False
+        required=False,
+        allow_null=True,
     )
 
     class Meta:

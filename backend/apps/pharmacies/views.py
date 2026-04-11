@@ -14,8 +14,12 @@ class PharmacyViewSet(viewsets.ModelViewSet):
     - List all pharmacies (with search, filter, and pagination)
     - Create, retrieve, update, delete a pharmacy
     """
-    queryset = Pharmacy.objects.select_related('sector__district__province').prefetch_related('insurance_providers')
+    queryset = (
+        Pharmacy.objects.select_related('sector__district__province', 'user')
+        .prefetch_related('insurance_providers')
+    )
     serializer_class = PharmacySerializer
+    pagination_class = None
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['name', 'phone_number', 'email']
     ordering_fields = ['name', 'created_at']

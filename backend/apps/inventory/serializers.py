@@ -43,16 +43,45 @@ class StockSerializer(serializers.ModelSerializer):
 class StockListSerializer(serializers.ModelSerializer):
     """Simplified stock serializer for list views."""
     medicine_name = serializers.CharField(source='medicine.name', read_only=True)
+    generic_name = serializers.CharField(source='medicine.generic_name', read_only=True)
+    pharmacy_id = serializers.IntegerField(source='pharmacy.id', read_only=True)
     pharmacy_name = serializers.CharField(source='pharmacy.name', read_only=True)
     pharmacy_logo = serializers.ImageField(source='pharmacy.logo', read_only=True)
-    sector_name = serializers.CharField(source='pharmacy.sector.name', read_only=True)
-    district_name = serializers.CharField(source='pharmacy.sector.district.name', read_only=True)
+    street_address = serializers.CharField(source='pharmacy.street_address', read_only=True)
+    phone_number = serializers.CharField(source='pharmacy.phone_number', read_only=True)
+    latitude = serializers.FloatField(source='pharmacy.latitude', read_only=True)
+    longitude = serializers.FloatField(source='pharmacy.longitude', read_only=True)
+    sector_name = serializers.SerializerMethodField()
+    district_name = serializers.SerializerMethodField()
+    province_name = serializers.SerializerMethodField()
     is_expired = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Stock
-        fields = ['id', 'medicine_name', 'pharmacy_name', 'pharmacy_logo', 'sector_name', 'district_name', 
-                  'quantity', 'price', 'is_in_stock', 'is_expired', 'last_updated']
+        fields = [
+            'id', 'medicine_name', 'generic_name', 'pharmacy_id', 'pharmacy_name', 'pharmacy_logo',
+            'street_address', 'phone_number', 'latitude', 'longitude',
+            'sector_name', 'district_name', 'province_name',
+            'quantity', 'price', 'is_in_stock', 'is_expired', 'last_updated',
+        ]
+
+    def get_sector_name(self, obj):
+        try:
+            return obj.pharmacy.sector.name
+        except Exception:
+            return None
+
+    def get_district_name(self, obj):
+        try:
+            return obj.pharmacy.sector.district.name
+        except Exception:
+            return None
+
+    def get_province_name(self, obj):
+        try:
+            return obj.pharmacy.sector.district.province.name
+        except Exception:
+            return None
     
     def get_is_expired(self, obj):
         return obj.is_expired

@@ -30,32 +30,93 @@ class PharmacySerializer(serializers.ModelSerializer):
     )
     current_status = serializers.SerializerMethodField()
     working_hours = PharmacyWorkingHourSerializer(many=True, read_only=True)
-    
+    sector_name = serializers.SerializerMethodField()
+    district_name = serializers.SerializerMethodField()
+    province_name = serializers.SerializerMethodField()
+    district_id = serializers.SerializerMethodField()
+
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'description', 'logo', 'sector', 'sector_id', 'street_address', 
+        fields = ['id', 'name', 'description', 'logo', 'sector', 'sector_id', 'street_address',
                   'latitude', 'longitude', 'phone_number', 'email', 'insurance_providers',
                   'insurance_provider_ids', 'opening_time', 'closing_time', 'is_active',
-                  'current_status', 'working_hours', 'created_at', 'updated_at']
-    
+                  'current_status', 'working_hours', 'created_at', 'updated_at',
+                  'sector_name', 'district_name', 'province_name', 'district_id']
+
+    def get_sector_name(self, obj):
+        if obj.sector_id:
+            return obj.sector.name
+        return None
+
+    def get_district_name(self, obj):
+        try:
+            return obj.sector.district.name
+        except Exception:
+            return None
+
+    def get_province_name(self, obj):
+        try:
+            return obj.sector.district.province.name
+        except Exception:
+            return None
+
+    def get_district_id(self, obj):
+        try:
+            return obj.sector.district_id
+        except Exception:
+            return None
+
     def get_current_status(self, obj):
         return obj.get_current_status()
 
 
 class PharmacyListSerializer(serializers.ModelSerializer):
     """Simplified pharmacy serializer for list views."""
-    sector_name = serializers.CharField(source='sector.name', read_only=True)
-    district_name = serializers.CharField(source='sector.district.name', read_only=True)
+    sector_name = serializers.SerializerMethodField()
+    district_name = serializers.SerializerMethodField()
+    province_name = serializers.SerializerMethodField()
+    sector_id = serializers.IntegerField(read_only=True)
+    district_id = serializers.SerializerMethodField()
+    owner_email = serializers.SerializerMethodField()
     current_status = serializers.SerializerMethodField()
     insurance_count = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'logo', 'phone_number', 'sector_name', 'district_name', 
+        fields = ['id', 'name', 'logo', 'phone_number', 'sector_id', 'district_id',
+                  'sector_name', 'district_name', 'province_name', 'owner_email',
                   'opening_time', 'closing_time', 'is_active', 'current_status', 'insurance_count']
-    
+
+    def get_sector_name(self, obj):
+        if obj.sector_id:
+            return obj.sector.name
+        return None
+
+    def get_district_name(self, obj):
+        try:
+            return obj.sector.district.name
+        except Exception:
+            return None
+
+    def get_province_name(self, obj):
+        try:
+            return obj.sector.district.province.name
+        except Exception:
+            return None
+
+    def get_district_id(self, obj):
+        try:
+            return obj.sector.district_id
+        except Exception:
+            return None
+
+    def get_owner_email(self, obj):
+        if obj.user_id:
+            return obj.user.email
+        return None
+
     def get_current_status(self, obj):
         return obj.get_current_status()
-    
+
     def get_insurance_count(self, obj):
         return obj.insurance_providers.count()

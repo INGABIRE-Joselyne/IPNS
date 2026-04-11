@@ -1,7 +1,19 @@
 """
 Main API URL configuration for IPNS.
 """
+import rest_framework.urlpatterns
 from django.urls import path, include
+
+# Monkey patch to prevent ValueError when registering suffix converter multiple times
+original_register = rest_framework.urlpatterns.register_converter
+
+def patched_register(converter, name):
+    try:
+        original_register(converter, name)
+    except ValueError:
+        pass  # Already registered
+
+rest_framework.urlpatterns.register_converter = patched_register
 
 urlpatterns = [
     # Auth API

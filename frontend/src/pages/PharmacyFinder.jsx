@@ -1,6 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, Heart, Building2, Filter, Search } from 'lucide-react';
+import { MapPin, Clock, Heart, Building2, Filter, Search, Navigation, Phone, Mail } from 'lucide-react';
 import { apiGet, endpoints } from '../utils/api';
+
+const distanceKm = (from, pharmacy) => {
+  if (
+    !from ||
+    pharmacy.latitude == null ||
+    pharmacy.longitude == null
+  ) {
+    return null;
+  }
+
+  const toRadians = (value) => (Number(value) * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const latDiff = toRadians(pharmacy.latitude - from.lat);
+  const lngDiff = toRadians(pharmacy.longitude - from.lng);
+  const lat1 = toRadians(from.lat);
+  const lat2 = toRadians(pharmacy.latitude);
+
+  const a =
+    Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(lngDiff / 2) * Math.sin(lngDiff / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusKm * c;
+};
 
 const PharmacyFinder = () => {
   const [pharmacies, setPharmacies] = useState([]);
@@ -11,6 +35,8 @@ const PharmacyFinder = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationStatus, setLocationStatus] = useState('');
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,7 +75,7 @@ const PharmacyFinder = () => {
   // Apply filters whenever any filter or search changes
   useEffect(() => {
     applyFilters();
-  }, [pharmacies, searchQuery, selectedDistrict, selectedSector, selectedStatus]);
+  }, [pharmacies, searchQuery, selectedProvince, selectedDistrict, selectedSector, selectedStatus, userLocation]);
 
   const loadProvinces = async () => {
     try {
@@ -97,12 +123,25 @@ const PharmacyFinder = () => {
     // Filter by search query (name or location)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      results = results.filter(
-        (pharmacy) =>
-          pharmacy.name.toLowerCase().includes(query) ||
-          (pharmacy.sector_name && pharmacy.sector_name.toLowerCase().includes(query)) ||
-          (pharmacy.district_name && pharmacy.district_name.toLowerCase().includes(query))
-      );
+      results = results.filter((pharmacy) => {
+        const searchableLocation = [
+          pharmacy.name,
+          pharmacy.street_address,
+          pharmacy.sector_name,
+          pharmacy.district_name,
+          pharmacy.province_name,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return searchableLocation.includes(query);
+      });
+    }
+
+    // Filter by province
+    if (selectedProvince) {
+      results = results.filter((pharmacy) => pharmacy.province_id === parseInt(selectedProvince));
     }
 
     // Filter by district
@@ -120,7 +159,42 @@ const PharmacyFinder = () => {
       results = results.filter((pharmacy) => pharmacy.current_status === selectedStatus);
     }
 
+    if (userLocation) {
+      results = results
+        .map((pharmacy) => ({
+          ...pharmacy,
+          distance_km: distanceKm(userLocation, pharmacy),
+        }))
+        .sort((a, b) => {
+          if (a.distance_km == null && b.distance_km == null) return 0;
+          if (a.distance_km == null) return 1;
+          if (b.distance_km == null) return -1;
+          return a.distance_km - b.distance_km;
+        });
+    }
+
     setFilteredPharmacies(results);
+  };
+
+  const requestUserLocation = () => {
+    setLocationStatus('locating');
+
+    if (!navigator.geolocation) {
+      setLocationStatus('unsupported');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setLocationStatus('ok');
+      },
+      () => setLocationStatus('denied'),
+      { enableHighAccuracy: true, timeout: 12000 }
+    );
   };
 
   const toggleFavorite = (pharmacyId) => {
@@ -146,9 +220,9 @@ const PharmacyFinder = () => {
 
   const getStatusDisplay = (status) => {
     const map = {
-      open: '🟢 Open',
-      closing_soon: '🟡 Closing Soon',
-      closed: '🔴 Closed',
+      open: 'Open',
+      closing_soon: 'Closing Soon',
+      closed: 'Closed',
     };
     return map[status] || status;
   };
@@ -159,21 +233,59 @@ const PharmacyFinder = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Find a Pharmacy</h1>
-          <p className="text-gray-600">Search and filter pharmacies near you</p>
+          <p className="text-gray-600">
+            Enter a location like province, district, sector, or street address to find nearby pharmacies.
+          </p>
         </div>
 
         {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative">
+        <form
+          className="mb-8 flex flex-col gap-3 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            applyFilters();
+          }}
+        >
+          <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search by pharmacy name or location..."
+              placeholder="Enter location or pharmacy name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:border-emerald-600"
             />
           </div>
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-emerald-700"
+          >
+            <Search size={18} />
+            Search
+          </button>
+        </form>
+
+        <div className="mb-8 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={requestUserLocation}
+            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-800 transition-colors hover:bg-blue-100"
+          >
+            <Navigation size={18} />
+            Show nearby pharmacies
+          </button>
+          {locationStatus === 'locating' && (
+            <span className="text-sm text-gray-600">Getting your location...</span>
+          )}
+          {locationStatus === 'ok' && (
+            <span className="text-sm font-medium text-blue-700">Nearest pharmacies are shown first</span>
+          )}
+          {locationStatus === 'denied' && (
+            <span className="text-sm text-amber-700">Location blocked. Enable location in your browser.</span>
+          )}
+          {locationStatus === 'unsupported' && (
+            <span className="text-sm text-gray-600">Your device does not support location.</span>
+          )}
         </div>
 
         {/* Filters */}
@@ -311,13 +423,38 @@ const PharmacyFinder = () => {
                   <div className="space-y-3 mb-4 text-sm">
                     <div className="flex items-center gap-2 text-gray-700">
                       <MapPin size={16} className="text-emerald-600" />
-                      <span>{pharmacy.sector_name}, {pharmacy.district_name}</span>
+                      <span>
+                        {[pharmacy.street_address, pharmacy.sector_name, pharmacy.district_name, pharmacy.province_name]
+                          .filter(Boolean)
+                          .join(', ') || 'Location not provided'}
+                      </span>
                     </div>
+                    {pharmacy.distance_km != null && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Navigation size={16} className="text-blue-600" />
+                        <span>{pharmacy.distance_km.toFixed(1)} km away</span>
+                      </div>
+                    )}
                     {pharmacy.opening_time && pharmacy.closing_time && (
                       <div className="flex items-center gap-2 text-gray-700">
                         <Clock size={16} className="text-emerald-600" />
                         <span>{pharmacy.opening_time} - {pharmacy.closing_time}</span>
                       </div>
+                    )}
+                    {pharmacy.phone_number && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Phone size={16} className="text-emerald-600" />
+                        <span>{pharmacy.phone_number}</span>
+                      </div>
+                    )}
+                    {pharmacy.email && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Mail size={16} className="text-emerald-600" />
+                        <span>{pharmacy.email}</span>
+                      </div>
+                    )}
+                    {pharmacy.description && (
+                      <p className="rounded-lg bg-gray-50 p-3 text-gray-600">{pharmacy.description}</p>
                     )}
                   </div>
 

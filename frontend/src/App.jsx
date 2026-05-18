@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import useRouter from './hooks/useRouter'
 import Layout from './components/Layout'
+import BackButton from './components/BackButton'
 
 // Public Pages
 import Landing from './pages/Landing'
@@ -29,8 +30,7 @@ import AdminPharmacyManagement from './pages/AdminPharmacyManagement'
 import AdminInventoryOverview from './pages/AdminInventoryOverview'
 import AdminMedicineCategories from './pages/AdminMedicineCategories'
 
-// Patient Pages (old)
-import Home from './pages/Home'
+// Patient Pages
 import PharmacyFinder from './pages/PharmacyFinder'
 import PharmacyDetails from './pages/PharmacyDetails'
 import MedicineSearch from './pages/MedicineSearch'
@@ -148,32 +148,39 @@ const AppContent = () => {
     }
   }
 
-  // Public routes
   if (['/login', '/register', '/unauthorized', '/404'].includes(currentPage)) {
     return renderPublicPage()
   }
 
-  // Pharmacist dashboard routes
-  if (currentPage.startsWith('/dashboard') || 
-      currentPage.startsWith('/inventory') || 
-      currentPage.startsWith('/pharmacy-profile') ||
-      currentPage === '/settings') {
+  if (
+    currentPage.startsWith('/dashboard') ||
+    currentPage.startsWith('/inventory') ||
+    currentPage.startsWith('/pharmacy-profile') ||
+    currentPage === '/settings'
+  ) {
     return renderPharmacistPage()
   }
 
-  // Admin routes
-  if (currentPage === '/admin' || currentPage.startsWith('/admin/') || currentPage === '/reports') {
+  if (
+    currentPage === '/admin' ||
+    currentPage.startsWith('/admin/') ||
+    currentPage === '/reports'
+  ) {
     return renderAdminPage()
   }
 
-  // Default to landing with layout
   return (
     <Layout>
       {['/', '/pharmacies', '/medicines', '/about'].includes(currentPage) ? (
-        currentPage === '/' ? <Landing /> :
-        currentPage === '/pharmacies' ? <PharmacyFinder /> :
-        currentPage === '/medicines' ? <MedicineSearch /> :
-        <About />
+        currentPage === '/' ? (
+          <Landing />
+        ) : currentPage === '/pharmacies' ? (
+          <PharmacyFinder />
+        ) : currentPage === '/medicines' ? (
+          <MedicineSearch />
+        ) : (
+          <About />
+        )
       ) : currentPage.startsWith('/pharmacies/') ? (
         <PharmacyDetails pharmacyId={currentPage.split('/')[2]} />
       ) : (
@@ -186,6 +193,7 @@ const AppContent = () => {
 const App = () => {
   return (
     <AuthProvider>
+      <BackButton />
       <AppContent />
     </AuthProvider>
   )

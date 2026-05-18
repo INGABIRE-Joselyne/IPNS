@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { LoadingSpinner } from '../components/Cards';
 import logo from '../assets/images/LOGO.png';
@@ -8,6 +8,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
@@ -28,12 +29,22 @@ const Login = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    setError('');
+    setResetMessage(
+      email
+        ? `Password reset help requested for ${email}. Please contact the system admin to reset this account password.`
+        : 'Enter your email first, then click Forgot password again so the admin knows which account to reset.'
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <img src={logo} alt="IPNS Logo" className="h-12 w-12" />
+          <img src={logo} alt="IPNS Logo" className="h-36 w-36 object-contain" />
         </div>
 
         {/* Card */}
@@ -45,6 +56,13 @@ const Login = () => {
             <div className="bg-red-100 border border-red-300 rounded-lg p-4 mb-6 flex gap-3">
               <AlertCircle size={20} className="text-red-600 flex-shrink-0" />
               <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
+
+          {resetMessage && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex gap-3">
+              <CheckCircle size={20} className="text-blue-600 flex-shrink-0" />
+              <p className="text-blue-800 text-sm">{resetMessage}</p>
             </div>
           )}
 
@@ -83,7 +101,11 @@ const Login = () => {
 
             {/* Forgot Password */}
             <div className="text-right">
-              <a href="#" className="text-emerald-600 hover:text-emerald-700 text-sm transition-colors">
+              <a
+                href="#forgot-password"
+                onClick={handleForgotPassword}
+                className="text-emerald-600 hover:text-emerald-700 text-sm transition-colors"
+              >
                 Forgot password?
               </a>
             </div>

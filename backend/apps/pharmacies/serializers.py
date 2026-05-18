@@ -75,6 +75,7 @@ class PharmacyListSerializer(serializers.ModelSerializer):
     sector_name = serializers.SerializerMethodField()
     district_name = serializers.SerializerMethodField()
     province_name = serializers.SerializerMethodField()
+    province_id = serializers.SerializerMethodField()
     sector_id = serializers.IntegerField(read_only=True)
     district_id = serializers.SerializerMethodField()
     owner_email = serializers.SerializerMethodField()
@@ -83,7 +84,9 @@ class PharmacyListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pharmacy
-        fields = ['id', 'name', 'logo', 'phone_number', 'sector_id', 'district_id',
+        fields = ['id', 'name', 'description', 'logo', 'phone_number', 'email',
+                  'street_address', 'sector_id', 'district_id', 'province_id',
+                  'latitude', 'longitude',
                   'sector_name', 'district_name', 'province_name', 'owner_email',
                   'opening_time', 'closing_time', 'is_active', 'current_status', 'insurance_count']
 
@@ -107,6 +110,12 @@ class PharmacyListSerializer(serializers.ModelSerializer):
     def get_district_id(self, obj):
         try:
             return obj.sector.district_id
+        except Exception:
+            return None
+
+    def get_province_id(self, obj):
+        try:
+            return obj.sector.district.province_id
         except Exception:
             return None
 

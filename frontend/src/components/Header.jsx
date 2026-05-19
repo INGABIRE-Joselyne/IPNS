@@ -13,7 +13,8 @@ const Header = () => {
   ];
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    // Changed bg-white to a dark blue/black background, removed light border, and adjusted shadow
+    <header className="bg-[#0B1528] sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-24">
           <div className="flex items-center gap-2">
@@ -25,7 +26,8 @@ const Header = () => {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-emerald-600 hover:text-emerald-700 transition-colors duration-200 text-sm font-medium"
+                // Changed text color from emerald-600 to text-gray-200, hovering to white
+                className="text-gray-200 hover:text-emerald-400 transition-colors duration-200 text-sm font-medium"
               >
                 {link.label}
               </a>
@@ -35,50 +37,54 @@ const Header = () => {
           <div className="hidden md:flex items-center gap-4">
             <a
               href="/medicines"
-              className="inline-flex items-center gap-2 px-4 py-2 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-medium transition-colors duration-200"
+              // Darkened the search button container to match the dark theme outline style
+              className="inline-flex items-center gap-2 px-4 py-2 border border-emerald-500/30 bg-emerald-950/20 hover:bg-gray-200 text-emerald-400 rounded-lg font-medium transition-colors duration-200"
             >
+              
+              Search Here ....
               <Search size={18} />
-              Search
             </a>
 
             <a
               href="/login"
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors duration-200 inline-block"
             >
-              Get Started
+              Login 
             </a>
           </div>
 
+          {/* Mobile menu button color adjusted to stand out on dark background */}
           <button
             type="button"
-            className="md:hidden text-gray-600 hover:text-emerald-600"
+            className="md:hidden text-gray-300 hover:text-white"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle navigation menu"
           >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMenuOpen ? <X size={30} /> : <Menu size={30} />}
           </button>
         </div>
 
+        {/* Mobile dropdown menu styles updated for dark mode consistency */}
         {isMenuOpen && (
           <nav className="md:hidden pb-4 space-y-2">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="block px-4 py-2 text-emerald-600 hover:text-emerald-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="block px-4 py-2 text-gray-200 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.label}
               </a>
             ))}
-
             <a
               href="/medicines"
-              className="flex w-full items-center justify-center gap-2 px-4 py-2 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-medium transition-colors duration-200"
+              className="flex w-full items-center justify-center gap-2 px-4 py-2 border border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 rounded-lg font-medium transition-colors duration-200"
               onClick={() => setIsMenuOpen(false)}
             >
+              
+              Search Here ....
               <Search size={18} />
-              Search
             </a>
 
             <a
@@ -86,7 +92,7 @@ const Header = () => {
               className="block w-full mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors duration-200 text-center"
               onClick={() => setIsMenuOpen(false)}
             >
-              Get Started
+              Login
             </a>
           </nav>
         )}

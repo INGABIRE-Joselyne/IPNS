@@ -21,19 +21,18 @@ const BackButton = () => {
         type="button"
         onClick={goBack}
         aria-label="Go back"
-        className="fixed left-5 top-5 z-[100] inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-blue-700 bg-blue-600 px-4 text-sm font-semibold text-white shadow-md transition-colors hover:bg-blue-700"
+        className="fixed left-5 top-5 z-[100] inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-none bg-gray-3 px-4 text-sm font-semibold text-emerald-400 shadow-md transition-colors hover:bg-gray-200"
       >
         <ArrowLeft size={20} />
-        Back
       </button>
 
       <button
         type="button"
         onClick={goNext}
         aria-label="Go next"
-        className="fixed right-5 top-5 z-[100] inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-blue-700 bg-blue-600 px-4 text-sm font-semibold text-white shadow-md transition-colors hover:bg-blue-700"
+        className="fixed right-5 top-5 z-[100] inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-none bg-gray-3 px-4 text-sm font-semibold text-emerald-400 shadow-md transition-colors hover:bg-gray-200"
       >
-        Next
+      
         <ArrowRight size={20} />
       </button>
     </>

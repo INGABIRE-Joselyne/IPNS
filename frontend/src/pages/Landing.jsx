@@ -78,7 +78,7 @@ const Landing = () => {
             Connect with pharmacies in real-time. Check stock, compare insurance, and locate the nearest open pharmacy.
           </p>
 
-          <a href="/login" className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors mb-8">
+          <a href="/login" className="inline-block bg-emerald-600 hover:bg-gray-900 text-white px-8 py-3 rounded-lg font-semibold transition-colors mb-8">
             Get Started
           </a>
 
@@ -182,10 +182,7 @@ const Landing = () => {
               <p className="text-gray-600">Know which pharmacies are open right now, no guessing needed.</p>
             </div>
             <div className="bg-white p-8 rounded-lg border border-gray-200 hover:border-emerald-400 transition-colors shadow-sm">
-              <Pill size={32} className="text-emerald-600 mb-4" />
-              <h3 className="text-gray-900 font-semibold text-lg mb-3">Comprehensive Medicine Catalog</h3>
-              <p className="text-gray-600">Access thousands of medicines with detailed information.</p>
-            </div>
+             </div>
             <div className="bg-white p-8 rounded-lg border border-gray-200 hover:border-emerald-400 transition-colors shadow-sm">
               <Lock size={32} className="text-emerald-600 mb-4" />
               <h3 className="text-gray-900 font-semibold text-lg mb-3">Secure & Reliable</h3>
@@ -198,10 +195,10 @@ const Landing = () => {
       {/* For Pharmacies Section */}
       <section id="for-pharmacies" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-16">For Pharmacy Managers</h2>
+          <h2 className="text-4xl font-bold text-emerald-600 text-center mb-16">For Pharmacy Managers</h2>
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-2xl font-bold text-white mb-6">Benefits of Joining IPNS</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Benefits of Joining IPNS</h3>
               <ul className="space-y-4">
                 <li className="flex gap-3 items-start">
                   <CheckCircle size={24} className="text-emerald-600 flex-shrink-0" />

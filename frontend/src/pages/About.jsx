@@ -130,9 +130,12 @@ const About = () => {
         <div className="mt-16 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Get Started?</h2>
           <p className="text-gray-600 mb-8">Join millions of Rwandans finding medicines faster</p>
-          <button className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-lg transition-colors">
+          <a
+            href="/medicines"
+            className="inline-block px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-lg transition-colors"
+          >
             Start Searching Now
-          </button>
+          </a>
         </div>
       </div>
     </div>

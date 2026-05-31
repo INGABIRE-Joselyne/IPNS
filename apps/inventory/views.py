@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Stock, StockMovement
@@ -37,6 +38,12 @@ class StockViewSet(viewsets.ModelViewSet):
     search_fields = ['medicine__name', 'pharmacy__name']
     ordering_fields = ['medicine__name', 'pharmacy__name', 'quantity', 'last_updated']
     ordering = ['-last_updated']
+
+    def get_permissions(self):
+        # Public read access for patients — no login needed
+        if self.action in ['list', 'retrieve', 'search_medicine', 'by_pharmacy', 'out_of_stock', 'expired']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     
     def get_serializer_class(self):
         if self.action == 'list':

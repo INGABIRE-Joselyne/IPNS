@@ -139,10 +139,6 @@ const Inventory = () => {
         quantity: parseInt(formData.quantity),
       };
 
-      if (formData.price) {
-        submitData.price = parseFloat(formData.price);
-      }
-
       if (formData.expiry_date) {
         submitData.expiry_date = formData.expiry_date;
       }

@@ -1,8 +1,10 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
+from apps.common.permissions import IsAdminRole
 from .models import Province, District, Sector
 from .serializers import (
     ProvinceSerializer, 
@@ -13,13 +15,13 @@ from .serializers import (
 
 
 class ProvinceViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for managing provinces.
-    - List all provinces
-    - Create, retrieve, update, delete a province
-    """
     queryset = Province.objects.all()
     serializer_class = ProvinceSerializer
+
+    def get_permissions(self):
+        if self.request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminRole()]
 
     @action(detail=True, methods=['get'])
     def districts(self, request, pk=None):
@@ -31,13 +33,13 @@ class ProvinceViewSet(viewsets.ModelViewSet):
 
 
 class DistrictViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for managing districts.
-    - List all districts (with optional filtering by province)
-    - Create, retrieve, update, delete a district
-    """
     queryset = District.objects.select_related('province')
     serializer_class = DistrictSerializer
+
+    def get_permissions(self):
+        if self.request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminRole()]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -56,13 +58,13 @@ class DistrictViewSet(viewsets.ModelViewSet):
 
 
 class SectorViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for managing sectors.
-    - List all sectors (with optional filtering by district)
-    - Create, retrieve, update, delete a sector
-    """
     queryset = Sector.objects.select_related('district', 'district__province')
     serializer_class = SectorDetailSerializer
+
+    def get_permissions(self):
+        if self.request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminRole()]
 
     def get_queryset(self):
         queryset = super().get_queryset()

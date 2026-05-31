@@ -5,7 +5,6 @@ const AddMedicineModal = ({ isOpen, onClose, onSave, token, loading }) => {
   const [formData, setFormData] = useState({
     medicine_id: '',
     quantity: '',
-    price: '',
     expiry_date: '',
   });
   const [medicines, setMedicines] = useState([]);
@@ -367,23 +366,6 @@ const AddMedicineModal = ({ isOpen, onClose, onSave, token, loading }) => {
               onChange={handleInputChange}
               placeholder="Enter quantity"
               min="1"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
-            />
-          </div>
-
-          {/* Price */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Price (Optional)
-            </label>
-            <input
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleInputChange}
-              placeholder="Enter price per unit"
-              step="0.01"
-              min="0"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
             />
           </div>

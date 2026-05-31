@@ -1,201 +1,160 @@
 import React, { useState } from 'react';
-import { Search, MapPin, Pill, Clock } from 'lucide-react';
-import { apiGet, endpoints } from '../utils/api';
+import { ShieldCheck, Lock, Mail, Eye, EyeOff, Search } from 'lucide-react';
+import logo from '../assets/images/LOGO.png';
 
 const Home = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [medicines, setMedicines] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('medicine'); // medicine or pharmacy
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ email: '', password: '' });
 
-  const handleMedicineSearch = async (e) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleLoginSubmit = (e) => {
     e.preventDefault();
-    if (!searchTerm.trim()) return;
-
-    setIsLoading(true);
-    try {
-      const data = await apiGet(endpoints.medicineSearch, { q: searchTerm });
-      setMedicines(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Search failed:', error);
-      setMedicines([]);
-    } finally {
-      setIsLoading(false);
-    }
+    console.log("Logging into IPNS with:", formData.email);
+    // Add your login authentication routing here
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-blue-50 to-gray-50">
-      {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="text-gray-900">Find Medicines</span>
-            <br />
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              In Real-Time
-            </span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
-            Discover medicine availability and pharmacy information across Rwanda's districts. 
-            No more blind searches. Get instant access to real-time stock levels and pharmacy status.
-          </p>
+    <div className="min-h-[calc(100vh-64px)] w-full flex flex-col md:flex-row bg-slate-50">
+      
+      {/* LEFT SIDE: WELCOME & BRANDING */}
+      <div className="w-full md:w-1/2 bg-teal-600 text-white flex flex-col justify-center items-start p-8 md:p-16 space-y-6 relative overflow-hidden">
+        {/* Background decorative soft shapes */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-teal-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+        <div className="absolute bottom-10 right-0 w-72 h-72 bg-emerald-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob delay-2000"></div>
 
-          {/* Search Tabs */}
-          <div className="flex justify-center gap-4 mb-8">
-            <button
-              onClick={() => setSelectedTab('medicine')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
-                selectedTab === 'medicine'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-              }`}
-            >
-              Search Medicine
-            </button>
-            <button
-              onClick={() => setSelectedTab('pharmacy')}
-              className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
-                selectedTab === 'pharmacy'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-              }`}
-            >
-              Find Pharmacy
-            </button>
+        <div className="z-10 space-y-4">
+          <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl inline-block border border-white/20 mb-2">
+            <ShieldCheck className="w-12 h-12 text-emerald-300" />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+            Welcome to <span className="text-emerald-300">IPNS</span>
+          </h1>
+          <p className="text-lg text-teal-100 max-w-md font-light">
+            Your trusted Integrated Pharmacy Navigation System. Instantly locate life-saving medications, explore nearby pharmacies, and check real-time stock availability all in one secure place.
+          </p>
+        </div>
+
+        {/* Small Feature Pill Badges underneath welcome */}
+        <div className="z-10 flex flex-wrap gap-3 pt-4">
+          <span className="bg-white/10 backdrop-blur-sm text-xs font-medium px-3 py-1.5 rounded-full border border-white/15 flex items-center gap-1.5">
+            <Search className="w-3.5 h-3.5 text-emerald-300" /> Fast Search
+          </span>
+          <span className="bg-white/10 backdrop-blur-sm text-xs font-medium px-3 py-1.5 rounded-full border border-white/15 flex items-center gap-1.5">
+            🛡️ Verified Pharmacies
+          </span>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: LOGIN FORM */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-16 bg-white">
+        <div className="w-full max-w-md space-y-8">
+          
+          {/* Logo and Greeting */}
+          <div className="text-center md:text-left space-y-2">
+            <img 
+              src={logo} 
+              alt="IPNS Logo" 
+              className="h-14 w-auto mx-auto md:mx-0 object-contain mb-4"
+              onError={(e) => { e.target.style.display = 'none'; }} // Fallback if logo path differs
+            />
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+              Account Login
+            </h2>
+            <p className="text-sm text-slate-500">
+              Please enter your credentials to access the system features.
+            </p>
           </div>
 
-          {/* Search Bar */}
-          {selectedTab === 'medicine' && (
-            <form onSubmit={handleMedicineSearch} className="max-w-2xl mx-auto">
+          {/* Form */}
+          <form onSubmit={handleLoginSubmit} className="space-y-5">
+            
+            {/* Email Field */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-slate-700 block">
+                Email Address
+              </label>
               <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                  <Mail className="w-5 h-5" />
+                </span>
                 <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search for medicine (e.g., Paracetamol)"
-                  className="w-full px-6 py-4 rounded-xl bg-white border border-emerald-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-600 transition-colors"
+                  type="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="name@example.com"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-slate-800 transition duration-200 shadow-sm"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-semibold text-slate-700 block">
+                  Password
+                </label>
+                <a href="#forgot" className="text-xs font-medium text-teal-600 hover:text-teal-700 transition">
+                  Forgot password?
+                </a>
+              </div>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                  <Lock className="w-5 h-5" />
+                </span>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  required
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-slate-800 transition duration-200 shadow-sm"
                 />
                 <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 transition"
                 >
-                  <Search size={20} />
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-            </form>
-          )}
-
-          {selectedTab === 'pharmacy' && (
-            <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-emerald-600" size={20} />
-                <input
-                  type="text"
-                  placeholder="Filter by location (District)"
-                  className="w-full pl-16 pr-6 py-4 rounded-xl bg-white border border-emerald-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-emerald-600 transition-colors"
-                />
-              </div>
             </div>
-          )}
-        </div>
 
-        {/* Search Results */}
-        {medicines.length > 0 && (
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Search Results</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {medicines.map((medicine) => (
-                <div
-                  key={medicine.id}
-                  className="bg-white border border-gray-200 rounded-xl p-6 hover:border-emerald-300 transition-all duration-200 hover:shadow-lg hover:shadow-emerald-100"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-lg font-bold text-gray-900 flex-1">{medicine.name}</h3>
-                    <span className="text-xs bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full">
-                      {medicine.strength || 'N/A'}
-                    </span>
-                  </div>
-                  {medicine.generic_name && (
-                    <p className="text-sm text-gray-600 mb-3">Generic: {medicine.generic_name}</p>
-                  )}
-                  <p className="text-sm text-gray-500 mb-4">Manufacturer: {medicine.manufacturer || 'N/A'}</p>
-                  <button className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors duration-200">
-                    View Availability
-                  </button>
-                </div>
-              ))}
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-slate-300 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-600 select-none">
+                Remember this device
+              </label>
             </div>
-          </div>
-        )}
 
-        {isLoading && (
-          <div className="text-center py-12">
-            <div className="inline-block">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-            </div>
-            <p className="text-gray-600 mt-4">Searching...</p>
-          </div>
-        )}
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl shadow-md shadow-teal-600/10 hover:shadow-lg hover:shadow-teal-600/20 transform active:scale-[0.99] transition duration-150 flex items-center justify-center gap-2"
+            >
+              Sign In to System
+            </button>
+          </form>
 
-        {searchTerm && medicines.length === 0 && !isLoading && (
-          <div className="text-center py-12">
-            <Pill className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-600">No medicines found. Try a different search term.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Features Section */}
-      <div className="bg-gray-100 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-gray-900 text-center mb-12">Why Choose IPNS?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <Search className="text-emerald-600" size={32} />,
-                title: 'Real-Time Search',
-                description: 'Find medicines instantly across all pharmacies in your district',
-              },
-              {
-                icon: <MapPin className="text-emerald-600" size={32} />,
-                title: 'Location Based',
-                description: 'Search by Province, District, or Sector for personalized results',
-              },
-              {
-                icon: <Clock className="text-emerald-600" size={32} />,
-                title: 'Status Updates',
-                description: 'Know if pharmacies are open, closing soon, or closed in real-time',
-              },
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="bg-white border border-gray-200 rounded-xl p-8 hover:border-emerald-300 transition-all duration-200"
-              >
-                <div className="mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-gradient-to-r from-emerald-100 to-teal-100 border border-emerald-300 rounded-2xl p-12 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Ready to Find Your Medicine?
-          </h2>
-          <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-            Stop searching pharmacy by pharmacy. Get instant access to real-time medicine availability across Rwanda.
+          {/* Footer inside Form panel */}
+          <p className="text-center text-xs text-slate-400 pt-4 border-t border-slate-100">
+            &copy; 2026 IPNS Platform. All medical data is securely encrypted.
           </p>
-          <button className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-lg transition-colors duration-200">
-            Start Searching Now
-          </button>
+
         </div>
       </div>
+
     </div>
   );
 };

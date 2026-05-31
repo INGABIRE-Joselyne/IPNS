@@ -102,8 +102,7 @@ const Login = () => {
             {/* Forgot Password */}
             <div className="text-right">
               <a
-                href="#forgot-password"
-                onClick={handleForgotPassword}
+                href="/forgot-password"
                 className="text-emerald-600 hover:text-emerald-700 text-sm transition-colors"
               >
                 Forgot password?

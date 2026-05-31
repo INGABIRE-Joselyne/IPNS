@@ -184,3 +184,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Rwanda Timezone
 TIME_ZONE = 'Africa/Kigali'
+
+# Email configuration (console backend for development — prints email to terminal)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@ipns.rw'
+FRONTEND_URL = 'http://localhost:5173'

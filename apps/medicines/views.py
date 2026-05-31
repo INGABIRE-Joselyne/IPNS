@@ -52,6 +52,11 @@ class MedicineViewSet(viewsets.ModelViewSet):
             return MedicineListSerializer
         return MedicineSerializer
 
+    def get_permissions(self):
+        if self.request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminRole()]
+
     def get_queryset(self):
         queryset = super().get_queryset()
         

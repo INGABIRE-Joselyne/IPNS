@@ -11,6 +11,8 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import NotFound from './pages/NotFound'
 import Unauthorized from './pages/Unauthorized'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 
 // Pharmacist Dashboard Pages
 import Dashboard from './pages/Dashboard'
@@ -35,6 +37,10 @@ import PharmacyFinder from './pages/PharmacyFinder'
 import PharmacyDetails from './pages/PharmacyDetails'
 import MedicineSearch from './pages/MedicineSearch'
 import About from './pages/About'
+import Contact from './pages/Contact'
+import FAQ from './pages/FAQ'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 
 const AppContent = () => {
   const currentPage = useRouter()
@@ -47,6 +53,10 @@ const AppContent = () => {
         return <Login />
       case '/register':
         return <Register />
+      case '/forgot-password':
+        return <ForgotPassword />
+      case '/reset-password':
+        return <ResetPassword />
       case '/unauthorized':
         return <Unauthorized />
       case '/404':
@@ -148,7 +158,7 @@ const AppContent = () => {
     }
   }
 
-  if (['/login', '/register', '/unauthorized', '/404'].includes(currentPage)) {
+  if (['/login', '/register', '/unauthorized', '/404', '/forgot-password', '/reset-password'].includes(currentPage)) {
     return renderPublicPage()
   }
 
@@ -171,15 +181,23 @@ const AppContent = () => {
 
   return (
     <Layout>
-      {['/', '/pharmacies', '/medicines', '/about'].includes(currentPage) ? (
+      {['/', '/pharmacies', '/medicines', '/about', '/contact', '/faq', '/privacy-policy', '/terms'].includes(currentPage) ? (
         currentPage === '/' ? (
           <Landing />
         ) : currentPage === '/pharmacies' ? (
           <PharmacyFinder />
         ) : currentPage === '/medicines' ? (
           <MedicineSearch />
-        ) : (
+        ) : currentPage === '/about' ? (
           <About />
+        ) : currentPage === '/contact' ? (
+          <Contact />
+        ) : currentPage === '/faq' ? (
+          <FAQ />
+        ) : currentPage === '/privacy-policy' ? (
+          <PrivacyPolicy />
+        ) : (
+          <TermsOfService />
         )
       ) : currentPage.startsWith('/pharmacies/') ? (
         <PharmacyDetails pharmacyId={currentPage.split('/')[2]} />

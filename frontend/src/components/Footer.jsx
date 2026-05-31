@@ -32,30 +32,37 @@ const Footer = () => {
           {/* Support */}
           <div>
             <h3 className="text-emerald-600 font-bold mb-4">Support</h3>
-            {/* Changed text-gray-600 to text-gray-300, changed hover color to white */}
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Contact Us</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
+              <li><a href="/contact" className="text-gray-300 hover:text-white transition-colors">Contact Us</a></li>
+              <li><a href="/faq" className="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
+              <li><a href="/privacy-policy" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="/terms" className="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
             </ul>
           </div>
 
-          {/* Social */}
+          {/* Connect */}
           <div>
             <h3 className="text-emerald-600 font-bold mb-4">Connect</h3>
-            {/* Updated icon text colors to match the layout changes */}
-            <div className="flex gap-4">
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                <Share2 size={20} />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                <Mail size={20} />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                <Heart size={20} />
-              </a>
-            </div>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a href="mailto:info@ipns.rw" className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
+                  <Mail size={16} />
+                  info@ipns.rw
+                </a>
+              </li>
+              <li>
+                <a href="/contact" className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
+                  <Share2 size={16} />
+                  Send us a message
+                </a>
+              </li>
+              <li>
+                <a href="/about" className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
+                  <Heart size={16} />
+                  Our Mission
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 

@@ -24,6 +24,9 @@ const linkBase =
 const AdminLayout = ({ children, active = 'dashboard' }) => {
   const { logout, user } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const nav = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
@@ -82,7 +85,7 @@ const AdminLayout = ({ children, active = 'dashboard' }) => {
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      <aside className="hidden w-[292px] shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
+      <aside className={`w-[292px] shrink-0 border-r border-slate-200 bg-white flex-col transition-all duration-300 ${sidebarOpen ? 'flex' : 'hidden'}`}>
         <div className="flex h-28 items-center px-9">
           <img src={logo} alt="IPNS Logo" className="h-14 w-14 object-contain" />
           <div className="ml-3 min-w-0">
@@ -122,38 +125,97 @@ const AdminLayout = ({ children, active = 'dashboard' }) => {
             <button
               type="button"
               aria-label="Open navigation"
-              onClick={() => setMobileNavOpen(true)}
+              onClick={() => setSidebarOpen(!sidebarOpen)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 lg:hidden"
             >
               <Menu className="h-6 w-6" />
             </button>
-            <span className="hidden h-10 w-10 items-center justify-center rounded-lg text-slate-700 lg:inline-flex">
+            <span className="hidden h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 cursor-pointer lg:inline-flex"
+              onClick={() => setSidebarOpen(!sidebarOpen)}>
               <Menu className="h-6 w-6" />
             </span>
             <h1 className="text-2xl font-semibold text-slate-950">Dashboard</h1>
           </div>
 
           <div className="flex items-center gap-5">
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"
-            >
-              <Bell className="h-6 w-6" />
-              <span className="absolute right-1 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">
-                3
-              </span>
-            </button>
-            <button
-              type="button"
-              className="flex items-center gap-3 rounded-full px-1 py-1 text-slate-950 hover:bg-slate-100"
-            >
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-950">
-                <UserRound className="h-8 w-8" />
-              </span>
-              <span className="hidden text-base font-medium sm:inline">{user?.first_name || 'Admin'}</span>
-              <ChevronDown className="hidden h-4 w-4 sm:block" />
-            </button>
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Notifications"
+                onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false); }}
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"
+              >
+                <Bell className="h-6 w-6" />
+                <span className="absolute right-1 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">
+                  3
+                </span>
+              </button>
+              {notifOpen && (
+                <div className="absolute right-0 top-12 w-80 bg-white border border-slate-200 rounded-xl shadow-lg z-50">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="font-semibold text-slate-900 text-sm">Notifications</p>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {[
+                      { text: 'New pharmacy registered', time: '2 min ago', color: 'bg-blue-500' },
+                      { text: 'Low stock alert: Amoxicillin', time: '1 hour ago', color: 'bg-red-500' },
+                      { text: 'Medicine catalog updated', time: '3 hours ago', color: 'bg-emerald-500' },
+                    ].map((n, i) => (
+                      <div key={i} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer">
+                        <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.color}`} />
+                        <div>
+                          <p className="text-sm text-slate-800">{n.text}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{n.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-4 py-3 border-t border-slate-100 text-center">
+                    <button onClick={() => setNotifOpen(false)} className="text-xs text-blue-600 hover:underline font-medium">
+                      Mark all as read
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Profile Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
+                className="flex items-center gap-3 rounded-full px-1 py-1 text-slate-950 hover:bg-slate-100"
+              >
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-950">
+                  <UserRound className="h-8 w-8" />
+                </span>
+                <span className="hidden text-base font-medium sm:inline">{user?.first_name || user?.email?.split('@')[0] || 'Admin'}</span>
+                <ChevronDown className="hidden h-4 w-4 sm:block" />
+              </button>
+              {profileOpen && (
+                <div className="absolute right-0 top-14 w-56 bg-white border border-slate-200 rounded-xl shadow-lg z-50">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="font-semibold text-slate-900 text-sm">{user?.first_name || 'Admin'}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{user?.email}</p>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() => { setProfileOpen(false); navigateTo('/settings'); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Settings
+                    </button>
+                    <button
+                      onClick={() => { setProfileOpen(false); logout(); navigateTo('/login'); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <div className="mx-auto max-w-[1320px] px-5 py-10 lg:px-10">{children}</div>

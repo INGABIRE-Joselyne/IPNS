@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     question: 'How do I contact support?',
-    answer: 'You can reach us via the Contact page, by email at support@ipns.rw, or by phone at +250 788 000 000 during business hours (Mon–Fri, 8am–6pm).'
+    answer: 'You can reach us via the Contact page, by email at support@ipns.rw, or by phone at +250 789 862 505 during business hours (Mon–Fri, 8am–6pm).'
   },
 ];
 

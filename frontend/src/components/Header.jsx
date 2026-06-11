@@ -11,6 +11,7 @@ const Header = () => {
     { label: 'Find Pharmacy', href: '/pharmacies' },
     { label: 'Search Medicine', href: '/medicines' },
     { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' },
   ];
 
   return (
@@ -38,7 +39,6 @@ const Header = () => {
                     }`}
                 >
                   {link.label}
-                  {/* Active underline indicator */}
                   {isActive && (
                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-400 rounded-full" />
                   )}

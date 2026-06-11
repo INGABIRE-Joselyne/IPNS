@@ -4,8 +4,11 @@ import {
   Lock, Zap, Building2, Pill, ArrowRight
 } from 'lucide-react';
 import heroImage from '../assets/images/hero-pharmacy.jpg';
+import { LoadingSpinner } from '../components/Cards';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const Landing = () => {
+  const { t } = useLanguage();
   const [medicineSearch, setMedicineSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -92,21 +95,20 @@ const Landing = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-medium px-4 py-1.5 rounded-full mb-8">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            Rwanda's #1 Pharmacy Network
+            {t('hero_badge')}
           </div>
 
           {/* Main Heading */}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-            Find Your Medicine,{' '}
+            {t('hero_title_1')}{' '}
             <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              Instantly
+              {t('hero_title_2')}
             </span>
           </h1>
 
           {/* Subheading */}
           <p className="text-gray-300 text-lg sm:text-xl max-w-2xl mx-auto mb-10">
-            Connect with pharmacies across Rwanda in real-time. Check stock,
-            verify insurance, and locate the nearest open pharmacy — all in one place.
+            {t('hero_subtitle')}
           </p>
 
           {/* Search Bar */}
@@ -117,7 +119,7 @@ const Landing = () => {
                 type="text"
                 value={medicineSearch}
                 onChange={(e) => setMedicineSearch(e.target.value)}
-                placeholder="Search for a medicine..."
+                placeholder={t('hero_search_placeholder')}
                 className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white/15 transition-all"
               />
             </div>
@@ -126,7 +128,7 @@ const Landing = () => {
               className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
             >
               <Search size={18} />
-              Search
+              {t('hero_search_btn')}
             </button>
           </form>
 
@@ -137,7 +139,7 @@ const Landing = () => {
           {searchResults.length > 0 && (
             <div className="mt-2 bg-white/10 border border-white/20 rounded-xl p-6 text-left max-w-2xl mx-auto backdrop-blur-sm">
               <p className="text-gray-300 mb-4 text-sm">
-                Found <span className="text-emerald-400 font-semibold">{searchResults.length}</span> pharmacy{searchResults.length > 1 ? 'ies' : ''} with this medicine in stock
+                Found <span className="text-emerald-400 font-semibold">{searchResults.length}</span> {searchResults.length > 1 ? t('hero_found_plural') : t('hero_found')}
               </p>
               <div className="grid sm:grid-cols-2 gap-3">
                 {searchResults.slice(0, 4).map((item, idx) => (
@@ -148,7 +150,7 @@ const Landing = () => {
                       <p className="text-gray-400 text-xs">{item.district_name}{item.sector_name ? `, ${item.sector_name}` : ''}</p>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-emerald-400 text-xs font-medium">● In Stock ({item.quantity})</span>
+                      <span className="text-emerald-400 text-xs font-medium">● {t('hero_in_stock')} ({item.quantity})</span>
                       {item.price && <span className="text-gray-300 text-xs">{Number(item.price).toLocaleString()} RWF</span>}
                     </div>
                   </div>
@@ -170,16 +172,16 @@ const Landing = () => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             <a href="/login" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors">
-              Get Started <ArrowRight size={18} />
+              {t('hero_get_started')} <ArrowRight size={18} />
             </a>
             <a href="/register" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold rounded-xl transition-colors">
-              Register Your Pharmacy
+              {t('hero_register_pharmacy')}
             </a>
           </div>
 
           {/* Scroll indicator */}
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-            <p className="text-gray-400 text-xs uppercase tracking-widest">Scroll</p>
+            <p className="text-gray-400 text-xs uppercase tracking-widest">{t('hero_scroll')}</p>
             <div className="w-5 h-8 border-2 border-gray-400/50 rounded-full flex items-start justify-center p-1">
               <div className="w-1 h-2 bg-emerald-400 rounded-full animate-pulse" />
             </div>
@@ -192,10 +194,10 @@ const Landing = () => {
       <section className="bg-emerald-600 py-10 px-4">
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { value: `${stats.pharmacies}+`, label: 'Pharmacies Connected' },
-            { value: `${stats.medicines}+`, label: 'Medicines Tracked' },
-            { value: `${stats.districts}+`, label: 'Districts Covered' },
-            { value: `${stats.searches.toLocaleString()}+`, label: 'Searches Today' },
+            { value: `${stats.pharmacies}+`, label: t('stats_pharmacies') },
+            { value: `${stats.medicines}+`, label: t('stats_medicines') },
+            { value: `${stats.districts}+`, label: t('stats_districts') },
+            { value: `${stats.searches.toLocaleString()}+`, label: t('stats_searches') },
           ].map((stat, i) => (
             <div key={i}>
               <p className="text-3xl font-bold text-white mb-1">{stat.value}</p>

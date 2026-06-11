@@ -1,14 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  AlertCircle,
-  Clock,
-  ExternalLink,
-  MapPin,
-  Navigation,
-  Phone,
-  Pill,
-  Search,
-  ShieldCheck,
+  AlertCircle, Clock, ExternalLink, MapPin,
+  Navigation, Phone, Pill, Search, ShieldCheck,
 } from 'lucide-react';
 import { apiGet, endpoints } from '../utils/api';
 
@@ -182,7 +175,7 @@ const MedicineSearch = () => {
     }
   };
 
-  const requestUserLocation = useCallback(() => {
+  const requestUserLocation = () => {
     setLocationStatus('locating');
 
     if (!navigator.geolocation) {
@@ -201,26 +194,22 @@ const MedicineSearch = () => {
       () => setLocationStatus('denied'),
       { enableHighAccuracy: true, timeout: 12000 }
     );
-  }, []);
+  };
 
-  const selectedMedicineRecord = useMemo(
-    () => medicines.find((medicine) => medicine.id === selectedMedicine),
-    [medicines, selectedMedicine]
-  );
+  // Plain calculations instead of useMemo to avoid errors with unreferenced hooks
+  const selectedMedicineRecord = medicines.find((medicine) => medicine.id === selectedMedicine);
 
-  const displayedAvailability = useMemo(() => {
-    if (selectedInsurance.length === 0) return availability;
+  const displayedAvailability = selectedInsurance.length === 0 
+    ? availability 
+    : availability.filter((stock) => {
+        const accepted = stock.insurance_providers || stock.accepted_insurance || stock.insurances || [];
+        if (!Array.isArray(accepted) || accepted.length === 0) return true;
 
-    return availability.filter((stock) => {
-      const accepted = stock.insurance_providers || stock.accepted_insurance || stock.insurances || [];
-      if (!Array.isArray(accepted) || accepted.length === 0) return true;
-
-      return accepted.some((insurance) => {
-        const id = typeof insurance === 'object' ? insurance.id : insurance;
-        return selectedInsurance.includes(String(id));
+        return accepted.some((insurance) => {
+          const id = typeof insurance === 'object' ? insurance.id : insurance;
+          return selectedInsurance.includes(String(id));
+        });
       });
-    });
-  }, [availability, selectedInsurance]);
 
   const toggleInsurance = (insuranceId) => {
     setSelectedInsurance((current) =>
@@ -238,7 +227,7 @@ const MedicineSearch = () => {
 
   const mapsUrl = (stock) => {
     if (stock.latitude != null && stock.longitude != null) {
-      return `https://www.google.com/maps/dir/?api=1&destination=${stock.latitude},${stock.longitude}`;
+      return `https://www.google.com/maps/search/?api=1&query=${stock.latitude},${stock.longitude}`;
     }
 
     const q = [stock.pharmacy_name, stock.street_address, stock.sector_name, stock.district_name]
@@ -267,7 +256,7 @@ const MedicineSearch = () => {
               }}
             >
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-800">Input Name</label>
+                <label className="mb-2 block text-sm font-semibold text-slate-800">Medicine Name</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
@@ -281,7 +270,7 @@ const MedicineSearch = () => {
               </div>
 
               <div className="space-y-4">
-                <label className="block text-sm font-semibold text-slate-800">Selection Medicine</label>
+                <label className="block text-sm font-semibold text-slate-800">Filter Location</label>
 
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-slate-600">Province</label>
@@ -290,7 +279,7 @@ const MedicineSearch = () => {
                     onChange={(event) => setSelectedProvince(event.target.value)}
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-colors focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   >
-                    <option value="">All provinces</option>
+                    <option value="">All Provinces</option>
                     {provinces.map((province) => (
                       <option key={province.id} value={province.id}>
                         {province.name}
@@ -307,7 +296,7 @@ const MedicineSearch = () => {
                     disabled={!selectedProvince}
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-colors focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                   >
-                    <option value="">All districts</option>
+                    <option value="">All Districts</option>
                     {districts.map((district) => (
                       <option key={district.id} value={district.id}>
                         {district.name}
@@ -324,7 +313,7 @@ const MedicineSearch = () => {
                     disabled={!selectedDistrict}
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-colors focus:border-blue-600 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                   >
-                    <option value="">All sectors</option>
+                    <option value="">All Sectors</option>
                     {sectors.map((sector) => (
                       <option key={sector.id} value={sector.id}>
                         {sector.name}
@@ -370,7 +359,7 @@ const MedicineSearch = () => {
                   className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   <Search size={18} />
-                  {isSearching ? 'Searching...' : 'Search result'}
+                  {isSearching ? 'Searching...' : 'Search Medicine'}
                 </button>
 
                 <button
@@ -379,15 +368,15 @@ const MedicineSearch = () => {
                   className="inline-flex items-center justify-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-800 transition-colors hover:bg-blue-100"
                 >
                   <Navigation size={18} />
-                  Nearest first
+                  Nearest First
                 </button>
               </div>
 
               {locationStatus === 'denied' && (
-                <p className="text-xs text-amber-700">Location blocked. Enable it in your browser to sort by distance.</p>
+                <p className="text-xs text-amber-700">Location access blocked.</p>
               )}
               {locationStatus === 'unsupported' && (
-                <p className="text-xs text-slate-500">Geolocation is not supported on this device.</p>
+                <p className="text-xs text-slate-500">Location services not supported.</p>
               )}
               {locationStatus === 'ok' && (
                 <p className="text-xs font-medium text-blue-700">Distance sort active.</p>

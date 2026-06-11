@@ -1,5 +1,6 @@
 import React from 'react'
 import { AuthProvider } from './contexts/AuthContext'
+import { LanguageProvider } from './contexts/LanguageContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import useRouter from './hooks/useRouter'
 import Layout from './components/Layout'
@@ -210,10 +211,12 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <AuthProvider>
-      <BackButton />
-      <AppContent />
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <BackButton />
+        <AppContent />
+      </AuthProvider>
+    </LanguageProvider>
   )
 }
 
